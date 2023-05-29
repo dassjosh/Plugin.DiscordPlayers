@@ -1,0 +1,65 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net461</TargetFramework>
+        <RootNamespace>DiscordPlayersPlugin</RootNamespace>
+        <LangVersion>6</LangVersion>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <DefineConstants>TRACE;</DefineConstants>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Content Include="..\..\..\.gitignore">
+        <Link>.gitignore</Link>
+      </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="mscorlib">
+        <HintPath>..\..\References\mscorlib.dll</HintPath>
+      </Reference>
+      <Reference Include="Oxide.Core">
+        <HintPath>..\..\References\Oxide.Core.dll</HintPath>
+      </Reference>
+      <Reference Include="Oxide.CSharp">
+        <HintPath>..\..\References\Oxide.CSharp.dll</HintPath>
+      </Reference>
+      <Reference Include="Oxide.Ext.Discord">
+        <HintPath>..\..\References\Oxide.Ext.Discord.dll</HintPath>
+      </Reference>
+      <Reference Include="Oxide.References">
+        <HintPath>..\..\References\Oxide.References.dll</HintPath>
+      </Reference>
+      <Reference Include="Oxide.Unity">
+        <HintPath>..\..\References\Oxide.Unity.dll</HintPath>
+      </Reference>
+      <Reference Include="System">
+        <HintPath>..\..\References\System.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Core">
+        <HintPath>..\..\References\System.Core.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Data">
+        <HintPath>..\..\References\System.Data.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine">
+        <HintPath>..\..\References\UnityEngine.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.CoreModule">
+        <HintPath>..\..\References\UnityEngine.CoreModule.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="..\..\..\DiscordPlayers.cs">
+        <Link>DiscordPlayers.cs</Link>
+      </Content>
+    </ItemGroup>
+
+    <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+      <Exec Command="plugin.merge -m -c -p ./merge.yml" />
+    </Target>
+
+</Project>
