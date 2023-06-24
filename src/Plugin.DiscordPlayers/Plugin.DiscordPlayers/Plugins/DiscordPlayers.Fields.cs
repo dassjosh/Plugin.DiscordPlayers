@@ -7,10 +7,13 @@ using DiscordPlayersPlugin.Handlers;
 using Oxide.Core.Plugins;
 using Oxide.Ext.Discord;
 using Oxide.Ext.Discord.Attributes;
+using Oxide.Ext.Discord.Clients;
+using Oxide.Ext.Discord.Connections;
 using Oxide.Ext.Discord.Entities;
 using Oxide.Ext.Discord.Libraries.AppCommands;
 using Oxide.Ext.Discord.Libraries.Placeholders;
 using Oxide.Ext.Discord.Libraries.Templates.Commands;
+using Oxide.Ext.Discord.Libraries.Templates.Embeds;
 using Oxide.Ext.Discord.Libraries.Templates.Messages;
 using Oxide.Ext.Discord.Pooling;
 using Oxide.Plugins;
@@ -19,9 +22,7 @@ namespace DiscordPlayersPlugin.Plugins
 {
     public partial class DiscordPlayers
     {
-        // ReSharper disable once UnassignedField.Global
-        // ReSharper disable once InconsistentNaming
-        [DiscordClient] public DiscordClient _client;
+        public DiscordClient Client { get; set; }
         
 #pragma warning disable CS0649
         // ReSharper disable once InconsistentNaming
@@ -38,7 +39,7 @@ namespace DiscordPlayersPlugin.Plugins
         private readonly DiscordEmbedFieldTemplates _field = GetLibrary<DiscordEmbedFieldTemplates>();
         private readonly DiscordCommandLocalizations _localizations = GetLibrary<DiscordCommandLocalizations>();
         private DiscordPluginPool _pool;
-        private readonly DiscordSettings _discordSettings = new DiscordSettings();
+        private readonly BotConnection _discordSettings = new BotConnection();
 
         private readonly Hash<string, DateTime> _onlineSince = new Hash<string, DateTime>();
         private readonly Hash<Snowflake, PermanentMessageHandler> _permanentState = new Hash<Snowflake, PermanentMessageHandler>();

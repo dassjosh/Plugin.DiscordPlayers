@@ -19,24 +19,22 @@ namespace DiscordPlayersPlugin.Plugins
         public void RegisterPlaceholders()
         {
             TimeSpanPlaceholders.RegisterPlaceholders(this, "discordplayers.duration", PlaceholderKeys.Data.PlayerDuration);
-            _placeholders.RegisterPlaceholder<IPlayer>(this, "discordplayers.player.clantag", GetClanTag);
-            _placeholders.RegisterPlaceholder<int>(this, "discordplayers.player.index", PlaceholderKeys.Data.PlayerIndex, IntValue);
-            _placeholders.RegisterPlaceholder<MessageState>(this, "discordplayers.state.page", GetPage);
-            _placeholders.RegisterPlaceholder<MessageState>(this, "discordplayers.state.sort", GetSort);
-            _placeholders.RegisterPlaceholder<MessageCache>(this, "discordplayers.command.id", GetCommand);
-            _placeholders.RegisterPlaceholder<int>(this, "discordplayers.page.max", PlaceholderKeys.Data.MaxPage, IntValue);
+            _placeholders.RegisterPlaceholder<IPlayer, string>(this, "discordplayers.player.clantag", GetClanTag);
+            _placeholders.RegisterPlaceholder<int>(this, "discordplayers.player.index", PlaceholderKeys.Data.PlayerIndex);
+            _placeholders.RegisterPlaceholder<MessageState, int>(this, "discordplayers.state.page", GetPage);
+            _placeholders.RegisterPlaceholder<MessageState, string>(this, "discordplayers.state.sort", GetSort);
+            _placeholders.RegisterPlaceholder<MessageCache, string>(this, "discordplayers.command.id", GetCommand);
+            _placeholders.RegisterPlaceholder<int>(this, "discordplayers.page.max", PlaceholderKeys.Data.MaxPage);
         }
-
-        public void GetClanTag(StringBuilder builder, PlaceholderState state, IPlayer player) => PlaceholderFormatting.Replace(builder, state, GetClanTag(player));
-        public void GetPage(StringBuilder builder, PlaceholderState state, MessageState embed) => PlaceholderFormatting.Replace(builder, state, embed.Page);
-        public void IntValue(StringBuilder builder, PlaceholderState state, int value) => PlaceholderFormatting.Replace(builder, state, value);
-        public void GetCommand(StringBuilder builder, PlaceholderState state, MessageCache cache) => PlaceholderFormatting.Replace(builder, state, cache.Settings.GetTemplateName());
-        public void GetSort(StringBuilder builder, PlaceholderState state, MessageState embed)
+        
+        public int GetPage(MessageState embed) => embed.Page;
+        public string GetCommand(MessageCache cache) => cache.Settings.GetTemplateName();
+        public string GetSort(PlaceholderState state, MessageState embed)
         {
             DiscordInteraction interaction = state.Data.Get<DiscordInteraction>();
             string key = embed.Sort == SortBy.Name ? LangKeys.SortByEnumName : LangKeys.SortByEnumTime;
             string sort = interaction != null ? interaction.GetLangMessage(this, key) : Lang(key);
-            PlaceholderFormatting.Replace(builder, state, sort);
+            return sort;
         }
 
         public PlaceholderData CloneForPlayer(PlaceholderData source, IPlayer player, int index)
@@ -47,7 +45,7 @@ namespace DiscordPlayersPlugin.Plugins
         
         public PlaceholderData GetDefault(MessageCache cache, DiscordInteraction interaction, int maxPage)
         {
-            return _placeholders.CreateData(this).Add(cache).Add(cache.State).Add(PlaceholderKeys.Data.MaxPage, maxPage).AddInteraction(interaction);
+            return _placeholders.CreateData(this).Add(nameof(MessageCache), cache).Add(nameof(MessageState), cache.State).Add(PlaceholderKeys.Data.MaxPage, maxPage).AddInteraction(interaction);
         }
     }
 }

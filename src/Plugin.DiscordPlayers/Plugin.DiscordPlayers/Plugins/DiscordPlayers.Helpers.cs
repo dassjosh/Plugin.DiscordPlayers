@@ -36,7 +36,7 @@ namespace DiscordPlayersPlugin.Plugins
                 return cache;
             }
             
-            interaction.CreateTemplateInteractionResponse(_client, this, InteractionResponseType.ChannelMessageWithSource, TemplateKeys.Errors.UnknownState, new InteractionCallbackData{Flags = MessageFlags.Ephemeral});
+            interaction.CreateTemplateResponse(Client, InteractionResponseType.ChannelMessageWithSource, TemplateKeys.Errors.UnknownState, new InteractionCallbackData{Flags = MessageFlags.Ephemeral});
             return null;
         }
         

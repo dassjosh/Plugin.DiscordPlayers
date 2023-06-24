@@ -10,6 +10,7 @@ namespace DiscordPlayersPlugin.Handlers
     {
         private readonly MessageCache _cache;
         private readonly DiscordMessage _message;
+        private readonly MessageUpdate _update = new MessageUpdate();
         private readonly Timer _timer;
 
         public PermanentMessageHandler(MessageCache cache, float updateRate, DiscordMessage message)
@@ -22,9 +23,9 @@ namespace DiscordPlayersPlugin.Handlers
 
         private void SendUpdate()
         {
-            DiscordPlayers.Instance.CreateMessage(_cache, null, _message, message =>
+            DiscordPlayers.Instance.CreateMessage(_cache, null, _update, message =>
             {
-                _message.EditMessage(DiscordPlayers.Instance._client, null, error =>
+                _message.Edit(DiscordPlayers.Instance.Client, message).Catch<ResponseError>(error =>
                 {
                     if (error.HttpStatusCode == DiscordHttpStatusCode.NotFound)
                     {

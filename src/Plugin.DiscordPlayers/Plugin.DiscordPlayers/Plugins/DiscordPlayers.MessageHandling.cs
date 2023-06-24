@@ -7,11 +7,10 @@ using Oxide.Core.Libraries.Covalence;
 using Oxide.Ext.Discord.Entities.Interactions;
 using Oxide.Ext.Discord.Entities.Messages.Embeds;
 using Oxide.Ext.Discord.Extensions;
-using Oxide.Ext.Discord.Interfaces.Entities.Templates;
+using Oxide.Ext.Discord.Interfaces.Entities.Messages;
+using Oxide.Ext.Discord.Interfaces.Promises;
 using Oxide.Ext.Discord.Libraries.Placeholders;
-using Oxide.Ext.Discord.Libraries.Pooling;
-using Oxide.Ext.Discord.Libraries.Templates.Messages.Bulk;
-using Oxide.Ext.Discord.Promise;
+using Oxide.Ext.Discord.Libraries.Templates.Embeds;
 
 namespace DiscordPlayersPlugin.Plugins
 {
@@ -30,16 +29,15 @@ namespace DiscordPlayersPlugin.Plugins
             data.ManualPool();
 
             T message = CreateMessage(cache.Settings, data, interaction, create);
-            CreateEmbeds(cache.Settings, data, interaction, embedLimit).Then(embeds =>
+            List<DiscordEmbed> embeds = CreateEmbeds(cache.Settings, data, interaction, embedLimit);
+            
+            message.Embeds = embeds;
+            CreateFields(cache, data, interaction, onlineList).Then(fields =>
             {
-                message.Embeds = embeds;
-                CreateFields(cache, data, interaction, onlineList).Then(fields =>
-                {
-                    ProcessEmbeds(embeds, fields, cache.Settings.EmbedFieldLimit);
-                    callback.Invoke(message);
-                    data.Dispose();
-                    _pool.FreeList(onlineList);
-                });
+                ProcessEmbeds(embeds, fields, cache.Settings.EmbedFieldLimit);
+                callback.Invoke(message);
+                data.Dispose();
+                _pool.FreeList(onlineList);
             });
         }
 
@@ -53,44 +51,54 @@ namespace DiscordPlayersPlugin.Plugins
         {
             if (settings.IsPermanent())
             {
-                return _templates.GetGlobalEntity(this, settings.NameCache.TemplateName, data, message);
+                return _templates.GetGlobalTemplate(this, settings.NameCache.TemplateName).ToMessage(data, message);
             }
 
-            return _templates.GetLocalizedEntity(this, settings.NameCache.TemplateName, interaction, data, message);
+            return _templates.GetLocalizedTemplate(this, settings.NameCache.TemplateName, interaction).ToMessage(data, message);
         }
 
-        public IDiscordPromise<List<DiscordEmbed>> CreateEmbeds(BaseMessageSettings settings, PlaceholderData data, DiscordInteraction interaction, int embedLimit)
+        public List<DiscordEmbed> CreateEmbeds(BaseMessageSettings settings, PlaceholderData data, DiscordInteraction interaction, int embedLimit)
         {
-            BulkTemplateRequest embedRequest = BulkTemplateRequest.Create(this);
+            List<DiscordEmbed> embeds = new List<DiscordEmbed>();
             for (int i = 0; i < embedLimit; i++)
             {
-                embedRequest.AddItem(settings.NameCache.GetEmbedName(i), data);
-            }
-            
-            if (settings.IsPermanent())
-            {
-                _embed.GetGlobalBulkEntityAsync(this, embedRequest);
+                string name = settings.NameCache.GetEmbedName(i);
+                DiscordEmbed embed;
+                if (settings.IsPermanent())
+                {
+                    embed = _embed.GetGlobalTemplate(this, name).ToEntity(data);
+                }
+                else
+                {
+                    embed = _embed.GetLocalizedTemplate(this, name, interaction).ToEntity(data);
+                }
+                
+                embeds.Add(embed);
             }
 
-            return _embed.GetLocalizedBulkEntityAsync(this, embedRequest);
+            return embeds;
         }
 
-        public IDiscordPromise<List<EmbedField>> CreateFields(MessageCache cache, PlaceholderData data, DiscordInteraction interaction, List<IPlayer> onlineList)
+        public IPromise<List<EmbedField>> CreateFields(MessageCache cache, PlaceholderData data, DiscordInteraction interaction, List<IPlayer> onlineList)
         {
-            int playerIndex = cache.Settings.MaxPlayersPerPage * cache.State.Page;
-            BulkTemplateRequest fieldRequest = BulkTemplateRequest.Create(this);
-            string template = cache.Settings.NameCache.TemplateName;
-            for (int index = 0; index < onlineList.Count; index++)
-            {
-                fieldRequest.AddItem(template, CloneForPlayer(data, onlineList[index], playerIndex));
-            }
-
+            DiscordEmbedFieldTemplate template;
             if (cache.Settings.IsPermanent())
             {
-                _field.GetGlobalBulkEntityAsync(this, fieldRequest);
+                template = _field.GetGlobalTemplate(this, cache.Settings.NameCache.TemplateName);
             }
+            else
+            {
+                template = _field.GetLocalizedTemplate(this, cache.Settings.NameCache.TemplateName, interaction);
+            }
+            
+            List<PlaceholderData> placeholders = new List<PlaceholderData>();
 
-            return _field.GetLocalizedBulkEntityAsync(this, fieldRequest);
+            for (int index = 0; index < onlineList.Count; index++)
+            {
+                placeholders.Add(CloneForPlayer(data, onlineList[index], index + 1));
+            }
+            
+            return template.ToEntityBulk(placeholders);
         }
         
         public void ProcessEmbeds(List<DiscordEmbed> embeds, List<EmbedField> fields, int fieldLimit)

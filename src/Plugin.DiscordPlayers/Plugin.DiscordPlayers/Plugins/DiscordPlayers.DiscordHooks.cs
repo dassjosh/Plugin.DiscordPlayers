@@ -13,7 +13,7 @@ using Oxide.Ext.Discord.Entities;
 using Oxide.Ext.Discord.Entities.Api;
 using Oxide.Ext.Discord.Entities.Applications;
 using Oxide.Ext.Discord.Entities.Channels;
-using Oxide.Ext.Discord.Entities.Gatway.Events;
+using Oxide.Ext.Discord.Entities.Gateway.Events;
 using Oxide.Ext.Discord.Entities.Guilds;
 using Oxide.Ext.Discord.Entities.Interactions;
 using Oxide.Ext.Discord.Entities.Interactions.ApplicationCommands;
@@ -30,7 +30,7 @@ namespace DiscordPlayersPlugin.Plugins
         [HookMethod(DiscordExtHooks.OnDiscordGatewayReady)]
         private void OnDiscordGatewayReady(GatewayReadyEvent ready)
         {
-            DiscordApplication app = _client.Bot.Application;
+            DiscordApplication app = Client.Bot.Application;
             
             foreach (CommandSettings command in _pluginConfig.CommandMessages)
             {
@@ -43,11 +43,11 @@ namespace DiscordPlayersPlugin.Plugins
                 {
                     if (command.Value.IsValid())
                     {
-                        _client.Bot.Application.GetGlobalCommand(_client, command.Value, oldCommand => oldCommand.Delete(_client, () =>
+                        app.GetGlobalCommand(Client, command.Value).Then(oldCommand => oldCommand.Delete(Client).Then(() =>
                         {
                             _pluginData.RegisteredCommands.Remove(command);
                             SaveData();
-                        }), error =>
+                        }).Catch<ResponseError>(error =>
                         {
                             if (error.DiscordError?.Code == 10063)
                             {
@@ -55,7 +55,7 @@ namespace DiscordPlayersPlugin.Plugins
                                 SaveData();
                                 error.SuppressErrorMessage();
                             }
-                        });
+                        }));
                     }
                 }
             }
@@ -72,17 +72,17 @@ namespace DiscordPlayersPlugin.Plugins
             }
             
             ApplicationCommandBuilder builder = new ApplicationCommandBuilder(command, "Shows players currently on the server", ApplicationCommandType.ChatInput);
-            builder.AddDirectMessagePermission(settings.AllowInDm);
+            builder.AllowInDirectMessages(settings.AllowInDm);
             builder.AddDefaultPermissions(PermissionFlags.None);
 
             CommandCreate cmd = builder.Build();
             DiscordCommandLocalization loc = builder.BuildCommandLocalization();
 
-            _localizations.RegisterCommandLocalizationAsync(this, settings.NameCache.TemplateName, loc, new TemplateVersion(1, 0, 0)).Then(() =>
+            _localizations.RegisterCommandLocalizationAsync(this, settings.NameCache.TemplateName, loc, new TemplateVersion(1, 0, 0), new TemplateVersion(1, 0, 0)).Then(() =>
             {
                 _localizations.ApplyCommandLocalizationsAsync(this, cmd, settings.NameCache.TemplateName).Then(() =>
                 {
-                    _client.Bot.Application.CreateGlobalCommand(_client, builder.Build(), appCommand =>
+                    Client.Bot.Application.CreateGlobalCommand(Client, builder.Build()).Then(appCommand =>
                     {
                         _pluginData.RegisteredCommands[command] = appCommand.Id;
                         SaveData();
@@ -90,7 +90,7 @@ namespace DiscordPlayersPlugin.Plugins
                 });
             });
             
-            _appCommand.AddApplicationCommand(this, _client.Bot.Application, nameof(HandleApplicationCommand), command);
+            _appCommand.AddApplicationCommand(this, Client.Bot.Application.Id, HandleApplicationCommand, command);
         }
 
         [HookMethod(DiscordExtHooks.OnDiscordGuildCreated)]
@@ -112,10 +112,10 @@ namespace DiscordPlayersPlugin.Plugins
                 PermanentMessageData existing = _pluginData.GetPermanentMessage(config);
                 if (existing != null)
                 {
-                    channel.GetChannelMessage(_client, existing.MessageId, message =>
+                    channel.GetMessage(Client, existing.MessageId).Then(message =>
                     {
                         _permanentState[message.Id] = new PermanentMessageHandler(new MessageCache(config), config.UpdateRate, message);
-                    }, error =>
+                    }).Catch<ResponseError>(error =>
                     {
                         if (error.HttpStatusCode == DiscordHttpStatusCode.NotFound)
                         {
@@ -137,7 +137,7 @@ namespace DiscordPlayersPlugin.Plugins
 
             CreateMessage<MessageCreate>(cache, null, null, create =>
             {
-                channel.CreateMessage(_client, create, message =>
+                channel.CreateMessage(Client, create).Then(message =>
                 {
                     _pluginData.SetPermanentMessage(config, new PermanentMessageData
                     {
@@ -159,7 +159,7 @@ namespace DiscordPlayersPlugin.Plugins
             
             CreateMessage<InteractionCallbackData>(cache, interaction, null, create =>
             {
-                interaction.CreateInteractionResponse(_client, new InteractionResponse
+                interaction.CreateResponse(Client, new InteractionResponse
                 {
                     Type = InteractionResponseType.ChannelMessageWithSource,
                     Data = create
@@ -222,7 +222,7 @@ namespace DiscordPlayersPlugin.Plugins
         {
             CreateMessage<InteractionCallbackData>(cache, interaction, null, create =>
             {
-                interaction.CreateInteractionResponse(_client, new InteractionResponse
+                interaction.CreateResponse(Client, new InteractionResponse
                 {
                     Type = InteractionResponseType.UpdateMessage,
                     Data = create

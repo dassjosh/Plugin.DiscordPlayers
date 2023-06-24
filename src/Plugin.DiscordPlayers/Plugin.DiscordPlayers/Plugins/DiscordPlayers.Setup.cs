@@ -69,7 +69,7 @@ namespace DiscordPlayersPlugin.Plugins
             }
 #endif
 
-            _client.Connect(_discordSettings);
+            Client.Connect(_discordSettings);
         }
 
         private void OnUserConnected(IPlayer player)
