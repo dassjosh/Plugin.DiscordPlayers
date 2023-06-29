@@ -19,8 +19,6 @@ namespace DiscordPlayersPlugin.Plugins
 
         private PluginConfig AdditionalConfig(PluginConfig config)
         {
-            config.Formats = new FormatSettings(config.Formats);
-            
             config.CommandMessages = config.CommandMessages ?? new List<CommandSettings>();
             if (config.CommandMessages.Count == 0)
             {
@@ -45,7 +43,14 @@ namespace DiscordPlayersPlugin.Plugins
             
             config.Permanent = config.Permanent ?? new List<PermanentMessageSettings>
             {
-                new PermanentMessageSettings { Enabled = false, ChannelId = new Snowflake(123), UpdateRate = 1f }
+                new PermanentMessageSettings
+                {
+                    Enabled = false, 
+                    ChannelId = new Snowflake(0), 
+                    UpdateRate = 1f,
+                    EmbedFieldLimit = 25,
+                    EmbedsPerMessage = 1
+                }
             };
 
             for (int index = 0; index < config.CommandMessages.Count; index++)

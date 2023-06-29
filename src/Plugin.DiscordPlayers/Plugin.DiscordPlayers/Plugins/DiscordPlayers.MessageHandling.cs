@@ -5,6 +5,7 @@ using DiscordPlayersPlugin.Cache;
 using DiscordPlayersPlugin.Configuration;
 using Oxide.Core.Libraries.Covalence;
 using Oxide.Ext.Discord.Entities.Interactions;
+using Oxide.Ext.Discord.Entities.Interactions.MessageComponents;
 using Oxide.Ext.Discord.Entities.Messages.Embeds;
 using Oxide.Ext.Discord.Extensions;
 using Oxide.Ext.Discord.Interfaces.Entities.Messages;
@@ -23,12 +24,15 @@ namespace DiscordPlayersPlugin.Plugins
             embedLimit = embedLimit.Clamp(1, 10);
 
             int maxPage = (onlineList.Count - 1) / cache.Settings.MaxPlayersPerPage;
-            cache.State.ClampPage(maxPage);
+            cache.State.ClampPage((short)maxPage);
             
             PlaceholderData data = GetDefault(cache, interaction, maxPage + 1);
             data.ManualPool();
 
             T message = CreateMessage(cache.Settings, data, interaction, create);
+            SetButtonState(message, BackCommand, cache.State.Page > 0);
+            SetButtonState(message, ForwardCommand, cache.State.Page < maxPage);
+
             List<DiscordEmbed> embeds = CreateEmbeds(cache.Settings, data, interaction, embedLimit);
             
             message.Embeds = embeds;
@@ -37,14 +41,17 @@ namespace DiscordPlayersPlugin.Plugins
                 ProcessEmbeds(embeds, fields, cache.Settings.EmbedFieldLimit);
                 callback.Invoke(message);
                 data.Dispose();
-                _pool.FreeList(onlineList);
+                Pool.FreeList(onlineList);
+            }).Catch(ex =>
+            {
+                PrintError(ex.ToString());
             });
         }
 
         public List<IPlayer> GetPlayerList(MessageCache cache)
         {
             int perPage = cache.Settings.MaxPlayersPerPage;
-            return _playerCache.GetList(cache.State.Sort, cache.Settings.ShowAdmins).Skip(cache.State.Page * perPage).Take(perPage).ToPooledList(_pool);
+            return _playerCache.GetList(cache.State.Sort, cache.Settings.ShowAdmins).Skip(cache.State.Page * perPage).Take(perPage).ToPooledList(Pool);
         }
 
         public T CreateMessage<T>(BaseMessageSettings settings, PlaceholderData data, DiscordInteraction interaction, T message) where T : class, IDiscordMessageTemplate, new()
@@ -55,6 +62,27 @@ namespace DiscordPlayersPlugin.Plugins
             }
 
             return _templates.GetLocalizedTemplate(this, settings.NameCache.TemplateName, interaction).ToMessage(data, message);
+        }
+
+        public void SetButtonState(IDiscordMessageTemplate message, string command, bool enabled)
+        {
+            for (int index = 0; index < message.Components.Count; index++)
+            {
+                ActionRowComponent row = message.Components[index];
+                for (int i = 0; i < row.Components.Count; i++)
+                {
+                    BaseComponent component = row.Components[i];
+                    if (component is ButtonComponent)
+                    {
+                        ButtonComponent button = (ButtonComponent)component;
+                        if (button.CustomId.StartsWith(command))
+                        {
+                            button.Disabled = !enabled;
+                            return;
+                        }
+                    }
+                }
+            }
         }
 
         public List<DiscordEmbed> CreateEmbeds(BaseMessageSettings settings, PlaceholderData data, DiscordInteraction interaction, int embedLimit)
@@ -98,6 +126,7 @@ namespace DiscordPlayersPlugin.Plugins
                 placeholders.Add(CloneForPlayer(data, onlineList[index], index + 1));
             }
             
+            //Puts($"{placeholders.Count}");
             return template.ToEntityBulk(placeholders);
         }
         
@@ -105,8 +134,9 @@ namespace DiscordPlayersPlugin.Plugins
         {
             int embedIndex = 0;
             DiscordEmbed embed = null;
+            Puts($"{fields.Count}");
             for (int i = 0; i < fields.Count; i++)
-            {
+            { 
                 if (i % fieldLimit == 0)
                 {
                     embed = embeds[embedIndex];
@@ -114,7 +144,8 @@ namespace DiscordPlayersPlugin.Plugins
                     {
                         embed.Fields = new List<EmbedField>();
                     }
-                    embedIndex += 1;
+
+                    embedIndex++;
                 }
                 
                 embed.Fields.Add(fields[i]);

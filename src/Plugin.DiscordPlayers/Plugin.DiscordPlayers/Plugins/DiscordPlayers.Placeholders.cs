@@ -1,5 +1,3 @@
-using System;
-using System.Text;
 using DiscordPlayersPlugin.Cache;
 using DiscordPlayersPlugin.Enums;
 using DiscordPlayersPlugin.Lang;
@@ -18,34 +16,50 @@ namespace DiscordPlayersPlugin.Plugins
     {
         public void RegisterPlaceholders()
         {
-            TimeSpanPlaceholders.RegisterPlaceholders(this, "discordplayers.duration", PlaceholderKeys.Data.PlayerDuration);
-            _placeholders.RegisterPlaceholder<IPlayer, string>(this, "discordplayers.player.clantag", GetClanTag);
-            _placeholders.RegisterPlaceholder<int>(this, "discordplayers.player.index", PlaceholderKeys.Data.PlayerIndex);
+            TimeSpanPlaceholders.RegisterPlaceholders(this, "discordplayers.duration", PlaceholderKeys.PlayerDuration);
+            _placeholders.RegisterPlaceholder<int>(this, "discordplayers.player.index", PlaceholderKeys.PlayerIndex);
             _placeholders.RegisterPlaceholder<MessageState, int>(this, "discordplayers.state.page", GetPage);
             _placeholders.RegisterPlaceholder<MessageState, string>(this, "discordplayers.state.sort", GetSort);
-            _placeholders.RegisterPlaceholder<MessageCache, string>(this, "discordplayers.command.id", GetCommand);
-            _placeholders.RegisterPlaceholder<int>(this, "discordplayers.page.max", PlaceholderKeys.Data.MaxPage);
+            _placeholders.RegisterPlaceholder<string>(this, "discordplayers.command.id", PlaceholderKeys.CommandId);
+            _placeholders.RegisterPlaceholder<string>(this, "discordplayers.command.name", PlaceholderKeys.CommandName);
+            _placeholders.RegisterPlaceholder<int>(this, "discordplayers.page.max", PlaceholderKeys.MaxPage);
         }
         
         public int GetPage(MessageState embed) => embed.Page;
-        public string GetCommand(MessageCache cache) => cache.Settings.GetTemplateName();
         public string GetSort(PlaceholderState state, MessageState embed)
         {
             DiscordInteraction interaction = state.Data.Get<DiscordInteraction>();
             string key = embed.Sort == SortBy.Name ? LangKeys.SortByEnumName : LangKeys.SortByEnumTime;
-            string sort = interaction != null ? interaction.GetLangMessage(this, key) : Lang(key);
-            return sort;
+            return interaction != null ? interaction.GetLangMessage(this, key) : Lang(key);
         }
 
         public PlaceholderData CloneForPlayer(PlaceholderData source, IPlayer player, int index)
         {
             DiscordUser user = player.GetDiscordUser();
-            return source.Clone().AddPlayer(player).AddUser(user).Add(PlaceholderKeys.Data.PlayerIndex, index).Add(PlaceholderKeys.Data.PlayerDuration, DateTime.UtcNow - _onlineSince[player.Id]);
+            return source.Clone()
+                         .AddPlayer(player)
+                         .AddUser(user)
+                         .Add(PlaceholderKeys.PlayerIndex, index)
+                         .Add(PlaceholderKeys.PlayerDuration, _playerCache.GetOnlineDuration(player));
+        }
+
+        public PlaceholderData GetDefault(DiscordInteraction interaction)
+        {
+            return _placeholders.CreateData(this).AddInteraction(interaction);
+        }
+        
+        public PlaceholderData GetDefault(MessageCache cache, DiscordInteraction interaction)
+        {
+            return GetDefault(interaction)
+                   .Add(nameof(MessageCache), cache)
+                   .Add(nameof(MessageState), cache.State);
         }
         
         public PlaceholderData GetDefault(MessageCache cache, DiscordInteraction interaction, int maxPage)
         {
-            return _placeholders.CreateData(this).Add(nameof(MessageCache), cache).Add(nameof(MessageState), cache.State).Add(PlaceholderKeys.Data.MaxPage, maxPage).AddInteraction(interaction);
+            return GetDefault(cache, interaction)
+                   .Add(PlaceholderKeys.MaxPage, maxPage)
+                   .Add(PlaceholderKeys.CommandId, cache.State.CreateBase64String());
         }
     }
 }

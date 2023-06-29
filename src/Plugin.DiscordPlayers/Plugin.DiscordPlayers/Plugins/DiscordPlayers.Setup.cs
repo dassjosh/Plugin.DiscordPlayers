@@ -3,7 +3,6 @@ using DiscordPlayersPlugin.Configuration;
 using DiscordPlayersPlugin.Data;
 using Oxide.Core;
 using Oxide.Core.Libraries.Covalence;
-using Oxide.Ext.Discord.Libraries.Pooling;
 using UnityEngine;
 
 namespace DiscordPlayersPlugin.Plugins
@@ -17,7 +16,6 @@ namespace DiscordPlayersPlugin.Plugins
             _discordSettings.LogLevel = _pluginConfig.ExtensionDebugging;
 
             _pluginData = Interface.Oxide.DataFileSystem.ReadObject<PluginData>(Name) ?? new PluginData();
-            _pool = GetLibrary<DiscordPool>().GetOrCreate(this);
         }
 
         private void OnServerInitialized()
@@ -29,10 +27,10 @@ namespace DiscordPlayersPlugin.Plugins
             }
             
             _playerCache.Initialize(players.Connected);
-
+            
             RegisterPlaceholders();
             RegisterTemplates();
-
+            
             foreach (CommandSettings message in _pluginConfig.CommandMessages)
             {
                 if (message.EmbedFieldLimit > 25)
@@ -57,29 +55,17 @@ namespace DiscordPlayersPlugin.Plugins
                 message.EmbedsPerMessage = Mathf.Clamp(message.EmbedsPerMessage, 1, 10);
             }
 
-#if RUST
-            foreach (Network.Connection connection in Network.Net.sv.connections)
-            {
-                _onlineSince[connection.ownerid.ToString()] = DateTime.UtcNow - TimeSpan.FromSeconds(connection.GetSecondsConnected());
-            }
-#else
-            foreach (IPlayer player in players.Connected)
-            {
-                _onlineSince[player.Id] = DateTime.UtcNow;
-            }
-#endif
-
             Client.Connect(_discordSettings);
         }
 
         private void OnUserConnected(IPlayer player)
         {
-            _onlineSince[player.Id] = DateTime.UtcNow;
+            _playerCache.OnUserConnected(player);
         }
 
         private void OnUserDisconnected(IPlayer player)
         {
-            _onlineSince.Remove(player.Id);
+            _playerCache.OnUserDisconnected(player);
         }
 
         private void Unload()

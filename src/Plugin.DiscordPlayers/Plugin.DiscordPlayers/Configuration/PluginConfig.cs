@@ -17,9 +17,6 @@ namespace DiscordPlayersPlugin.Configuration
         
         [JsonProperty(PropertyName = "Permanent Messages")]
         public List<PermanentMessageSettings> Permanent { get; set; }
-        
-        [JsonProperty(PropertyName = "Format Settings")]
-        public FormatSettings Formats { get; set; }
 
         [JsonConverter(typeof(StringEnumConverter))]
         [DefaultValue(DiscordLogLevel.Info)]

@@ -2,9 +2,10 @@ using System;
 using System.Linq;
 using DiscordPlayersPlugin.Cache;
 using DiscordPlayersPlugin.Configuration;
+using DiscordPlayersPlugin.Placeholders;
+using DiscordPlayersPlugin.State;
 using DiscordPlayersPlugin.Templates;
 using Oxide.Core;
-using Oxide.Core.Libraries.Covalence;
 using Oxide.Ext.Discord.Entities.Interactions;
 using Oxide.Ext.Discord.Entities.Interactions.Response;
 using Oxide.Ext.Discord.Entities.Messages;
@@ -19,6 +20,13 @@ namespace DiscordPlayersPlugin.Plugins
         public MessageCache GetCache(DiscordInteraction interaction)
         {
             DiscordMessage message = interaction.Message;
+            CommandSettings command;
+            if (message == null)
+            {
+                InteractionDataParsed args = interaction.Parsed;
+                command = _pluginConfig.CommandMessages.FirstOrDefault(c => c.Command == args.Command);
+                return command != null ? new MessageCache(command) : null;
+            }
             string customId = interaction.Data.CustomId;
             
             MessageCache cache = _messageCache[message.Id];
@@ -26,32 +34,33 @@ namespace DiscordPlayersPlugin.Plugins
             {
                 return cache;
             }
-
-            string commandName = customId.Substring(customId.LastIndexOf(" ", StringComparison.Ordinal));
-            CommandSettings command = _pluginConfig.CommandMessages.FirstOrDefault(c => c.Command == commandName);
-            if (command != null)
+            
+            Puts(customId);
+            string base64 = customId.Substring(customId.LastIndexOf(" ", StringComparison.Ordinal) + 1);
+            Puts($"{base64}");
+            MessageState state = MessageState.Create(base64);
+            if (state == null)
             {
-                cache = new MessageCache(command);
-                _messageCache[message.Id] = cache;
-                return cache;
+                SendResponse(interaction, TemplateKeys.Errors.UnknownState, GetDefault(interaction));
+                return null;
             }
             
-            interaction.CreateTemplateResponse(Client, InteractionResponseType.ChannelMessageWithSource, TemplateKeys.Errors.UnknownState, new InteractionCallbackData{Flags = MessageFlags.Ephemeral});
-            return null;
-        }
-        
-        public string GetClanTag(IPlayer player)
-        {
-            string clanTag = Clans?.Call<string>("GetClanOf", player);
-            return !string.IsNullOrEmpty(clanTag) ? string.Format(_pluginConfig.Formats.ClanTagFormat, clanTag) : string.Empty;
+            Puts(state.ToString());
+            command = _pluginConfig.CommandMessages.FirstOrDefault(c => c.Command == state.Command);
+            if (command == null)
+            {
+                SendResponse(interaction, TemplateKeys.Errors.UnknownCommand, GetDefault(interaction).Add(PlaceholderKeys.CommandName, state.Command));
+                return null;
+            }
+            
+            cache = new MessageCache(command, state);
+            _messageCache[message.Id] = cache;
+            return cache;
         }
 
-        public T NextEnum<T>(T src, T[] array) where T : struct
+        public void SendResponse(DiscordInteraction interaction, string templateName, PlaceholderData data, MessageFlags flags = MessageFlags.Ephemeral)
         {
-            if (!typeof(T).IsEnum) throw new ArgumentException($"Argument {typeof(T).FullName} is not an Enum");
-            
-            int index = Array.IndexOf(array, src) + 1;
-            return array.Length == index ? array[0] : array[index];            
+            interaction.CreateTemplateResponse(Client, InteractionResponseType.ChannelMessageWithSource, templateName, new InteractionCallbackData { Flags = flags }, data);
         }
 
         public string Lang(string key)

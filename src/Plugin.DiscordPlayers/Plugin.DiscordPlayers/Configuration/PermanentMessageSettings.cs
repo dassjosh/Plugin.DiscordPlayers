@@ -23,7 +23,7 @@ namespace DiscordPlayersPlugin.Configuration
         public PermanentMessageSettings(PermanentMessageSettings settings) : base(settings)
         {
             Enabled = settings?.Enabled ?? false;
-            TemplateName = settings?.TemplateName ?? "Default";
+            TemplateName = settings?.TemplateName ?? "Permanent";
             ChannelId = settings?.ChannelId ?? default(Snowflake);
             UpdateRate = settings?.UpdateRate ?? 1f;
         }

@@ -151,6 +151,11 @@
             Builder to use when building application commands
             </summary>
         </member>
+        <member name="F:Oxide.Ext.Discord.Builders.ApplicationCommands.ApplicationCommandBuilder.CommandName">
+            <summary>
+            The Name of the command
+            </summary>
+        </member>
         <member name="M:Oxide.Ext.Discord.Builders.ApplicationCommands.ApplicationCommandBuilder.#ctor(System.String,System.String,Oxide.Ext.Discord.Entities.Interactions.ApplicationCommands.ApplicationCommandType)">
             <summary>
             Creates a new Application Command Builder
@@ -263,6 +268,16 @@
             Builder for Sub Command Groups
             </summary>
         </member>
+        <member name="F:Oxide.Ext.Discord.Builders.ApplicationCommands.ApplicationCommandGroupBuilder.CommandName">
+            <summary>
+            The Name of the command
+            </summary>
+        </member>
+        <member name="F:Oxide.Ext.Discord.Builders.ApplicationCommands.ApplicationCommandGroupBuilder.GroupName">
+            <summary>
+            The Name of the group
+            </summary>
+        </member>
         <member name="M:Oxide.Ext.Discord.Builders.ApplicationCommands.ApplicationCommandGroupBuilder.AddNameLocalizations(Oxide.Core.Plugins.Plugin,System.String)">
             <summary>
             Adds command name localizations for a given plugin and lang key
@@ -309,6 +324,26 @@
             Represents a Subcommand Option Builder for SubCommands
             </summary>
         </member>
+        <member name="F:Oxide.Ext.Discord.Builders.ApplicationCommands.ApplicationCommandOptionBuilder.CommandName">
+            <summary>
+            The Name of the command
+            </summary>
+        </member>
+        <member name="F:Oxide.Ext.Discord.Builders.ApplicationCommands.ApplicationCommandOptionBuilder.GroupName">
+            <summary>
+            The Name of the group
+            </summary>
+        </member>
+        <member name="F:Oxide.Ext.Discord.Builders.ApplicationCommands.ApplicationCommandOptionBuilder.SubCommandName">
+            <summary>
+            The Name of the Sub Command
+            </summary>
+        </member>
+        <member name="F:Oxide.Ext.Discord.Builders.ApplicationCommands.ApplicationCommandOptionBuilder.OptionName">
+            <summary>
+            The Name of the Option
+            </summary>
+        </member>
         <member name="M:Oxide.Ext.Discord.Builders.ApplicationCommands.ApplicationCommandOptionBuilder.#ctor(System.Collections.Generic.List{Oxide.Ext.Discord.Entities.Interactions.ApplicationCommands.CommandOption},Oxide.Ext.Discord.Entities.Interactions.ApplicationCommands.CommandOptionType,System.String,System.String,Oxide.Ext.Discord.Libraries.Locale.ServerLocale,System.String,System.String,System.String)">
             <summary>
             Constructor
@@ -318,6 +353,9 @@
             <param name="name"></param>
             <param name="description"></param>
             <param name="defaultLanguage"></param>
+            <param name="commandName"></param>
+            <param name="groupName"></param>
+            <param name="subCommandName"></param>
         </member>
         <member name="M:Oxide.Ext.Discord.Builders.ApplicationCommands.ApplicationCommandOptionBuilder.AddNameLocalizations(Oxide.Core.Plugins.Plugin,System.String)">
             <summary>
@@ -452,6 +490,21 @@
             Application Sub Command Builder
             </summary>
         </member>
+        <member name="F:Oxide.Ext.Discord.Builders.ApplicationCommands.ApplicationSubCommandBuilder.CommandName">
+            <summary>
+            The Name of the command
+            </summary>
+        </member>
+        <member name="F:Oxide.Ext.Discord.Builders.ApplicationCommands.ApplicationSubCommandBuilder.GroupName">
+            <summary>
+            The Name of the group
+            </summary>
+        </member>
+        <member name="F:Oxide.Ext.Discord.Builders.ApplicationCommands.ApplicationSubCommandBuilder.SubCommandName">
+            <summary>
+            The Name of the Sub Command
+            </summary>
+        </member>
         <member name="M:Oxide.Ext.Discord.Builders.ApplicationCommands.ApplicationSubCommandBuilder.#ctor(System.Collections.Generic.List{Oxide.Ext.Discord.Entities.Interactions.ApplicationCommands.CommandOption},System.String,System.String,Oxide.Ext.Discord.Libraries.Locale.ServerLocale,System.String,System.String)">
             <summary>
             Constructor
@@ -460,6 +513,8 @@
             <param name="name">Name of the sub command</param>
             <param name="description">Description of the sub command</param>
             <param name="defaultLanguage"></param>
+            <param name="commandName"></param>
+            <param name="groupName"></param>
         </member>
         <member name="M:Oxide.Ext.Discord.Builders.ApplicationCommands.ApplicationSubCommandBuilder.AddNameLocalizations(Oxide.Core.Plugins.Plugin,System.String)">
             <summary>
@@ -821,6 +876,11 @@
             Builder for Auto Complete Interaction
             </summary>
         </member>
+        <member name="P:Oxide.Ext.Discord.Builders.Interactions.InteractionAutoCompleteBuilder.Count">
+            <summary>
+            Number of added choices
+            </summary>
+        </member>
         <member name="M:Oxide.Ext.Discord.Builders.Interactions.InteractionAutoCompleteBuilder.#ctor(Oxide.Ext.Discord.Entities.Interactions.DiscordInteraction,Oxide.Ext.Discord.Entities.Interactions.Response.InteractionAutoCompleteMessage)">
             <summary>
             Constructor
@@ -903,6 +963,24 @@
             </summary>
             <param name="permission">Permission to get groups for</param>
             <param name="filter">String to filter by</param>
+            <param name="comparison"><see cref="T:System.StringComparison"/> to use</param>
+            <param name="search"><see cref="T:Oxide.Ext.Discord.Builders.Interactions.AutoComplete.AutoCompleteSearchMode"/> Filter search mode</param>
+        </member>
+        <member name="M:Oxide.Ext.Discord.Builders.Interactions.InteractionAutoCompleteBuilder.AddPermissionsInGroup(System.String,System.String,System.StringComparison,Oxide.Ext.Discord.Builders.Interactions.AutoComplete.AutoCompleteSearchMode)">
+            <summary>
+            Adds List of Permissions that are in the given group
+            </summary>
+            <param name="group">Group to get permissions for</param>
+            <param name="filter">Permission filter</param>
+            <param name="comparison"><see cref="T:System.StringComparison"/> to use</param>
+            <param name="search"><see cref="T:Oxide.Ext.Discord.Builders.Interactions.AutoComplete.AutoCompleteSearchMode"/> Filter search mode</param>
+        </member>
+        <member name="M:Oxide.Ext.Discord.Builders.Interactions.InteractionAutoCompleteBuilder.AddPermissionsNotInGroup(System.String,System.String,System.StringComparison,Oxide.Ext.Discord.Builders.Interactions.AutoComplete.AutoCompleteSearchMode)">
+            <summary>
+            Adds a List of Permissions that are not in a given group
+            </summary>
+            <param name="group">Group that doesn't have the permissions</param>
+            <param name="filter">Permission filter</param>
             <param name="comparison"><see cref="T:System.StringComparison"/> to use</param>
             <param name="search"><see cref="T:Oxide.Ext.Discord.Builders.Interactions.AutoComplete.AutoCompleteSearchMode"/> Filter search mode</param>
         </member>
@@ -1554,6 +1632,13 @@
             </summary>
             <param name="value"></param>
             <returns></returns>
+        </member>
+        <member name="M:Oxide.Ext.Discord.Cache.EnumCache`1.Next(`0)">
+            <summary>
+            Returns the next enum values. If the value is the last value it will start from the beginning
+            </summary>
+            <param name="value">Value to get the next enum from</param>
+            <returns>Next enum from the given value</returns>
         </member>
         <member name="T:Oxide.Ext.Discord.Cache.FileAttachmentCache">
             <summary>
@@ -5110,7 +5195,6 @@
             Creates a message in a text channel using a global message template
             </summary>
             <param name="client">Client to use</param>
-            <param name="plugin">Plugin for the template</param>
             <param name="templateName">Template name</param>
             <param name="message">message to use (optional)</param>
             <param name="placeholders">Placeholders to apply (optional)</param>
@@ -5120,7 +5204,6 @@
             Creates a message in a text channel using a localized message template
             </summary>
             <param name="client">Client to use</param>
-            <param name="plugin">Plugin for the template</param>
             <param name="templateName">Template name</param>
             <param name="language">Oxide language for the template</param>
             <param name="message">message to use (optional)</param>
@@ -11302,7 +11385,6 @@
             Creates a interaction message response from a message template
             </summary>
             <param name="client">Client to use</param>
-            <param name="plugin">Plugin for the template</param>
             <param name="type">Response type for the interaction</param>
             <param name="templateName">Name of the template</param>
             <param name="message">Message to send (optional)</param>
@@ -11314,7 +11396,6 @@
             Creates a interaction modal response from a modal template 
             </summary>
             <param name="client">Client to use</param>
-            <param name="plugin">Plugin for the template</param>
             <param name="templateName"></param>
             <param name="message">Message to use (optional)</param>
             <param name="placeholders">Placeholders to apply (optional)</param>
@@ -11383,7 +11464,6 @@
             Edit a interaction response with a message template
             </summary>
             <param name="client">Client to use</param>
-            <param name="plugin">Plugin for the template</param>
             <param name="templateName">Template Name</param>
             <param name="message">Message to use (optional)</param>
             <param name="placeholders">Placeholders to apply (optional)</param>
@@ -12958,7 +13038,6 @@
             Reply to a message using a global message template
             </summary>
             <param name="client">Client to use</param>
-            <param name="plugin">Plugin for the template</param>
             <param name="templateName">Template Name</param>
             <param name="message">Message to use (optional)</param>
             <param name="placeholders">Placeholders to apply (optional)</param>
@@ -12968,7 +13047,6 @@
             Reply to a message using a global message template
             </summary>
             <param name="client">Client to use</param>
-            <param name="plugin">Plugin for the template</param>
             <param name="templateName">Template Name</param>
             <param name="language">Oxide language to use</param>
             <param name="message">Message to use (optional)</param>
@@ -13116,7 +13194,6 @@
             Edit a message using a global message template
             </summary>
             <param name="client">Client to use</param>
-            <param name="plugin">Plugin for the template</param>
             <param name="templateName">Template Name</param>
             <param name="placeholders">Placeholders to apply (optional)</param>
             <param name="update">Update to be applied to the message</param>
@@ -13126,7 +13203,6 @@
             Edit a message using a localized message template
             </summary>
             <param name="client">Client to use</param>
-            <param name="plugin">Plugin for the template</param>
             <param name="templateName">Template Name</param>
             <param name="language">Oxide language to use</param>
             <param name="placeholders">Placeholders to apply (optional)</param>
@@ -15291,7 +15367,6 @@
             Send a message in a DM to the user using a localized message template
             </summary>
             <param name="client">Client to use</param>
-            <param name="plugin">Plugin for the template</param>
             <param name="templateName">Template Name</param>
             <param name="language">Oxide language to use</param>
             <param name="message">Message to use (optional)</param>
@@ -15302,7 +15377,6 @@
             Reply to a message using a global message template
             </summary>
             <param name="client">Client to use</param>
-            <param name="plugin">Plugin for the template</param>
             <param name="templateName">Template Name</param>
             <param name="message">Message to use (optional)</param>
             <param name="placeholders">Placeholders to apply (optional)</param>
@@ -15944,7 +16018,6 @@
             Send a message to a webhook using a global message template
             </summary>
             <param name="client">Client to use</param>
-            <param name="plugin">Plugin for the template</param>
             <param name="templateName">Template Name</param>
             <param name="message">Message to use (optional)</param>
             <param name="placeholders">Placeholders to apply (optional)</param>
@@ -15955,7 +16028,6 @@
             Send a message to a webhook using a localized message template
             </summary>
             <param name="client">Client to use</param>
-            <param name="plugin">Plugin for the template</param>
             <param name="templateName">Template Name</param>
             <param name="language">Oxide language to use</param>
             <param name="message">Message to use (optional)</param>
@@ -16798,7 +16870,6 @@
             </summary>
             <param name="player">Player to send the message to</param>
             <param name="client">Client to use</param>
-            <param name="plugin">Plugin for the template</param>
             <param name="templateName">Template Name</param>
             <param name="message">Message to use (optional)</param>
             <param name="placeholders">Placeholders to apply (optional)</param>
@@ -16809,7 +16880,6 @@
             </summary>
             <param name="player">Player to send the message to</param>
             <param name="client">Client to use</param>
-            <param name="plugin">Plugin for the template</param>
             <param name="templateName">Template Name</param>
             <param name="message">Message to use (optional)</param>
             <param name="placeholders">Placeholders to apply (optional)</param>
@@ -19417,6 +19487,18 @@
             <see cref="P:Oxide.Core.Libraries.Covalence.IPlayer.Ping"/> placeholder
             </summary>
         </member>
+        <member name="M:Oxide.Ext.Discord.Libraries.Placeholders.Default.PlayerPlaceholders.Permissions(Oxide.Core.Libraries.Covalence.IPlayer)">
+            <summary>
+            Player Permissions Placeholder
+            </summary>
+        </member>
+        <member name="M:Oxide.Ext.Discord.Libraries.Placeholders.Default.PlayerPlaceholders.Groups(Oxide.Core.Libraries.Covalence.IPlayer)">
+            <summary>
+            Player Groups Placeholder
+            </summary>
+            <param name="player"></param>
+            <returns></returns>
+        </member>
         <member name="M:Oxide.Ext.Discord.Libraries.Placeholders.Default.PlayerPlaceholders.SteamProfileUrl(Oxide.Core.Libraries.Covalence.IPlayer)">
             <summary>
             Steam Profile Url Placeholder 
@@ -19433,6 +19515,11 @@
             </summary>
         </member>
         <member name="M:Oxide.Ext.Discord.Libraries.Placeholders.Default.PlayerPlaceholders.BattleMetricsNameUrl(Oxide.Core.Libraries.Covalence.IPlayer)">
+            <summary>
+            Battle metrics Place Name Url Placeholder
+            </summary>
+        </member>
+        <member name="M:Oxide.Ext.Discord.Libraries.Placeholders.Default.PlayerPlaceholders.ServerArmorUrl(Oxide.Core.Libraries.Covalence.IPlayer)">
             <summary>
             Battle metrics Place Name Url Placeholder
             </summary>
@@ -19791,7 +19878,7 @@
         </member>
         <member name="M:Oxide.Ext.Discord.Libraries.Placeholders.DiscordPlaceholders.ProcessPlaceholders(System.String,Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderData)">
             <summary>
-            Process placeholders for the given Text
+            Process placeholders for the given text.
             </summary>
             <param name="text">Text to process placeholders for</param>
             <param name="data">Placeholder Data for the placeholders</param>
@@ -19799,13 +19886,16 @@
         </member>
         <member name="M:Oxide.Ext.Discord.Libraries.Placeholders.DiscordPlaceholders.CreateData(Oxide.Core.Plugins.Plugin)">
             <summary>
-            Creates Pooled <see cref="T:Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderData"/>
+            Returns a pooled <see cref="T:Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderData"/> for the given plugin.
+            If you wish to manually pool call the <see cref="M:Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderData.ManualPool"/> method.
+            If you wish to clone <see cref="T:Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderData"/> call the <see cref="M:Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderData.Clone"/> method.
             </summary>
             <returns><see cref="T:Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderData"/></returns>
         </member>
         <member name="M:Oxide.Ext.Discord.Libraries.Placeholders.DiscordPlaceholders.RegisterPlaceholder(Oxide.Core.Plugins.Plugin,System.String,System.String)">
             <summary>
-            Registers a placeholder static value placeholder
+            Registers a placeholder static value placeholder.
+            Static placeholder value can not be changed.
             </summary>
             <param name="plugin">Plugin this placeholder is for</param>
             <param name="placeholder">Placeholder string</param>
@@ -19814,7 +19904,8 @@
         </member>
         <member name="M:Oxide.Ext.Discord.Libraries.Placeholders.DiscordPlaceholders.RegisterPlaceholder``1(Oxide.Core.Plugins.Plugin,System.String,System.Func{``0})">
             <summary>
-            Registers a placeholder
+            Registers a placeholder that will call the callback function when the placeholder is called.
+            This function will return TResult data for the placeholder
             </summary>
             <param name="plugin">Plugin this placeholder is for</param>
             <param name="placeholder">Placeholder string</param>
@@ -19823,7 +19914,7 @@
         </member>
         <member name="M:Oxide.Ext.Discord.Libraries.Placeholders.DiscordPlaceholders.RegisterPlaceholder``1(Oxide.Core.Plugins.Plugin,System.String,System.String)">
             <summary>
-            Registers a placeholder that uses the dataKey value
+            Registers a placeholder that will take a datakey from <see cref="T:Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderData"/> and use that as the placeholder value
             </summary>
             <param name="plugin">Plugin this placeholder is for</param>
             <param name="placeholder">Placeholder string</param>
@@ -19833,7 +19924,8 @@
         </member>
         <member name="M:Oxide.Ext.Discord.Libraries.Placeholders.DiscordPlaceholders.RegisterPlaceholder``2(Oxide.Core.Plugins.Plugin,System.String,System.Func{``0,``1})">
             <summary>
-            Registers a placeholder of type {T}
+            Registers a placeholder that will pull type T from <see cref="T:Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderData"/>. The datakey for T will be the T.GetType().Name
+            Type T will be passed into the callback function and will expect a TResult to be returned from that function.
             </summary>
             <param name="plugin">Plugin this placeholder is for</param>
             <param name="placeholder">Placeholder string</param>
@@ -19844,7 +19936,8 @@
         </member>
         <member name="M:Oxide.Ext.Discord.Libraries.Placeholders.DiscordPlaceholders.RegisterPlaceholder``2(Oxide.Core.Plugins.Plugin,System.String,System.String,System.Func{``0,``1})">
             <summary>
-            Registers a placeholder of type {T}
+            Registers a placeholder that will pull type T from <see cref="T:Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderData"/>. The datakey for T will come from the datakey argument
+            Type T will be passed into the callback function and will expect a TResult to be returned from that function.
             </summary>
             <param name="plugin">Plugin this placeholder is for</param>
             <param name="placeholder">Placeholder string</param>
@@ -19856,7 +19949,8 @@
         </member>
         <member name="M:Oxide.Ext.Discord.Libraries.Placeholders.DiscordPlaceholders.RegisterPlaceholder``2(Oxide.Core.Plugins.Plugin,System.String,System.Func{Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderState,``0,``1})">
             <summary>
-            Registers a placeholder of type {T}
+            Registers a placeholder that will pull type T from <see cref="T:Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderData"/>. The datakey for T will be the T.GetType().Name
+            Type T will be passed into the callback function along with the current <see cref="T:Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderState"/> and will expect a TResult to be returned from that function.
             </summary>
             <param name="plugin">Plugin this placeholder is for</param>
             <param name="placeholder">Placeholder string</param>
@@ -19867,7 +19961,8 @@
         </member>
         <member name="M:Oxide.Ext.Discord.Libraries.Placeholders.DiscordPlaceholders.RegisterPlaceholder``2(Oxide.Core.Plugins.Plugin,System.String,System.String,System.Func{Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderState,``0,``1})">
             <summary>
-            Registers a placeholder of type {T}
+            Registers a placeholder that will pull type T from <see cref="T:Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderData"/>. The datakey for T will come from the datakey argument
+            Type T will be passed into the callback function along with the current <see cref="T:Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderState"/> and will expect a TResult to be returned from that function.
             </summary>
             <param name="plugin">Plugin this placeholder is for</param>
             <param name="placeholder">Placeholder string</param>
@@ -20553,13 +20648,6 @@
             Constructor
             </summary>
         </member>
-        <member name="M:Oxide.Ext.Discord.Libraries.Templates.Commands.ArgumentLocalization.#ctor(System.String,System.String)">
-            <summary>
-            Constructor
-            </summary>
-            <param name="name"></param>
-            <param name="description"></param>
-        </member>
         <member name="M:Oxide.Ext.Discord.Libraries.Templates.Commands.ArgumentLocalization.#ctor(Oxide.Ext.Discord.Entities.Interactions.ApplicationCommands.CommandOption,Oxide.Ext.Discord.Libraries.Locale.DiscordLocale)">
             <summary>
             Constructor
@@ -20638,13 +20726,6 @@
             <summary>
             Constructor
             </summary>
-        </member>
-        <member name="M:Oxide.Ext.Discord.Libraries.Templates.Commands.CommandLocalization.#ctor(System.String,System.String)">
-            <summary>
-            Constructor
-            </summary>
-            <param name="name"></param>
-            <param name="description"></param>
         </member>
         <member name="M:Oxide.Ext.Discord.Libraries.Templates.Commands.CommandLocalization.#ctor(Oxide.Ext.Discord.Entities.Interactions.ApplicationCommands.CommandCreate,Oxide.Ext.Discord.Libraries.Locale.DiscordLocale)">
             <summary>
@@ -22464,6 +22545,12 @@
             Constructor for the promise
             </summary>
         </member>
+        <member name="M:Oxide.Ext.Discord.Promises.Promise.Create">
+            <summary>
+            Creates a Promise
+            </summary>
+            <returns></returns>
+        </member>
         <member name="M:Oxide.Ext.Discord.Promises.Promise.Resolved">
             <summary>
             Returns a promise that has been resolved
@@ -24236,101 +24323,6 @@
         <member name="F:Oxide.Ext.Discord.WebSockets.SocketState.Disconnected">
             <summary>
             Websocket is currently disconnect and not waiting to connect
-            </summary>
-        </member>
-        <member name="F:ThisAssembly.Git.IsDirty">
-            <summary>
-            Gets whether the current repository is dirty.
-            </summary>
-        </member>
-        <member name="F:ThisAssembly.Git.IsDirtyString">
-            <summary>
-            => @"false"
-            </summary>
-        </member>
-        <member name="F:ThisAssembly.Git.RepositoryUrl">
-            <summary>
-            => @"https://github.com/dassjosh/Oxide.Ext.Discord.git"
-            </summary>
-        </member>
-        <member name="F:ThisAssembly.Git.Branch">
-            <summary>
-            => @"develop"
-            </summary>
-        </member>
-        <member name="F:ThisAssembly.Git.Commit">
-            <summary>
-            => @"986f01f0"
-            </summary>
-        </member>
-        <member name="F:ThisAssembly.Git.Sha">
-            <summary>
-            => @"986f01f0396526892cdb9250570ac6a53c1092ed"
-            </summary>
-        </member>
-        <member name="F:ThisAssembly.Git.CommitDate">
-            <summary>
-            => @"2023-06-24T14:54:16-05:00"
-            </summary>
-        </member>
-        <member name="F:ThisAssembly.Git.Commits">
-            <summary>
-            => @"597"
-            </summary>
-        </member>
-        <member name="F:ThisAssembly.Git.Tag">
-            <summary>
-            => @"2.1.9-597-g986f01f0"
-            </summary>
-        </member>
-        <member name="F:ThisAssembly.Git.BaseTag">
-            <summary>
-            => @"2.1.9"
-            </summary>
-        </member>
-        <member name="F:ThisAssembly.Git.BaseVersion.Major">
-            <summary>
-            => @"2"
-            </summary>
-        </member>
-        <member name="F:ThisAssembly.Git.BaseVersion.Minor">
-            <summary>
-            => @"1"
-            </summary>
-        </member>
-        <member name="F:ThisAssembly.Git.BaseVersion.Patch">
-            <summary>
-            => @"9"
-            </summary>
-        </member>
-        <member name="F:ThisAssembly.Git.SemVer.Major">
-            <summary>
-            => @"2"
-            </summary>
-        </member>
-        <member name="F:ThisAssembly.Git.SemVer.Minor">
-            <summary>
-            => @"1"
-            </summary>
-        </member>
-        <member name="F:ThisAssembly.Git.SemVer.Patch">
-            <summary>
-            => @"606"
-            </summary>
-        </member>
-        <member name="F:ThisAssembly.Git.SemVer.Label">
-            <summary>
-            => @""
-            </summary>
-        </member>
-        <member name="F:ThisAssembly.Git.SemVer.DashLabel">
-            <summary>
-            => @""
-            </summary>
-        </member>
-        <member name="F:ThisAssembly.Git.SemVer.Source">
-            <summary>
-            => @"Tag"
             </summary>
         </member>
     </members>

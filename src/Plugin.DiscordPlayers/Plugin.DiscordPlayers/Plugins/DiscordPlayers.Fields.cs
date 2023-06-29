@@ -7,6 +7,7 @@ using DiscordPlayersPlugin.Handlers;
 using Oxide.Core.Plugins;
 using Oxide.Ext.Discord;
 using Oxide.Ext.Discord.Attributes;
+using Oxide.Ext.Discord.Attributes.Pooling;
 using Oxide.Ext.Discord.Clients;
 using Oxide.Ext.Discord.Connections;
 using Oxide.Ext.Discord.Entities;
@@ -32,27 +33,26 @@ namespace DiscordPlayersPlugin.Plugins
         private PluginConfig _pluginConfig; //Plugin Config
         private PluginData _pluginData;
         
+        [DiscordPool]
+        public DiscordPluginPool Pool;
         private readonly DiscordAppCommand _appCommand = GetLibrary<DiscordAppCommand>();
         private readonly DiscordPlaceholders _placeholders = GetLibrary<DiscordPlaceholders>();
         private readonly DiscordMessageTemplates _templates = GetLibrary<DiscordMessageTemplates>();
         private readonly DiscordEmbedTemplates _embed = GetLibrary<DiscordEmbedTemplates>();
         private readonly DiscordEmbedFieldTemplates _field = GetLibrary<DiscordEmbedFieldTemplates>();
         private readonly DiscordCommandLocalizations _localizations = GetLibrary<DiscordCommandLocalizations>();
-        private DiscordPluginPool _pool;
-        private readonly BotConnection _discordSettings = new BotConnection();
 
-        private readonly Hash<string, DateTime> _onlineSince = new Hash<string, DateTime>();
+        private readonly BotConnection _discordSettings = new BotConnection();
+        
         private readonly Hash<Snowflake, PermanentMessageHandler> _permanentState = new Hash<Snowflake, PermanentMessageHandler>();
         private readonly Hash<Snowflake, MessageCache> _messageCache = new Hash<Snowflake, MessageCache>();
         private readonly OnlinePlayerCache _playerCache = new OnlinePlayerCache();
 
         private const string BaseCommand = nameof(DiscordPlayers) + ".";
-        private const string BackCommand = BaseCommand + "Back";
-        private const string RefreshCommand = BaseCommand + "Refresh";
-        private const string ForwardCommand = BaseCommand + "Forward";
-        private const string ChangeSort = BaseCommand + "Sort";
-
-        public readonly SortBy[] SortByList = (SortBy[])Enum.GetValues(typeof(SortBy));
+        private const string BackCommand = BaseCommand + "B";
+        private const string RefreshCommand = BaseCommand + "R";
+        private const string ForwardCommand = BaseCommand + "F";
+        private const string ChangeSort = BaseCommand + "S";
 
         public static DiscordPlayers Instance;
 

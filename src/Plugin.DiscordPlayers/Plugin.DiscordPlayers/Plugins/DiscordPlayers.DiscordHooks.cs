@@ -114,7 +114,7 @@ namespace DiscordPlayersPlugin.Plugins
                 {
                     channel.GetMessage(Client, existing.MessageId).Then(message =>
                     {
-                        _permanentState[message.Id] = new PermanentMessageHandler(new MessageCache(config), config.UpdateRate, message);
+                        _permanentState[message.Id] = new PermanentMessageHandler(Client, new MessageCache(config), config.UpdateRate, message);
                     }).Catch<ResponseError>(error =>
                     {
                         if (error.HttpStatusCode == DiscordHttpStatusCode.NotFound)
@@ -144,7 +144,7 @@ namespace DiscordPlayersPlugin.Plugins
                         MessageId = message.Id
                     });
                     SaveData();
-                    _permanentState[message.Id] = new PermanentMessageHandler(cache, config.UpdateRate, message);
+                    _permanentState[message.Id] = new PermanentMessageHandler(Client, cache, config.UpdateRate, message);
                 });
             });
         }
@@ -222,6 +222,7 @@ namespace DiscordPlayersPlugin.Plugins
         {
             CreateMessage<InteractionCallbackData>(cache, interaction, null, create =>
             {
+                Puts("A");
                 interaction.CreateResponse(Client, new InteractionResponse
                 {
                     Type = InteractionResponseType.UpdateMessage,

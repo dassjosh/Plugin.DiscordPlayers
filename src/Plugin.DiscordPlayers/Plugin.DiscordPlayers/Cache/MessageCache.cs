@@ -11,7 +11,7 @@ namespace DiscordPlayersPlugin.Cache
         public MessageCache(BaseMessageSettings settings, MessageState state = null)
         {
             Settings = settings;
-            State = state ?? new MessageState();
+            State = state ?? MessageState.CreateNew(Settings.GetTemplateName());
         }
     }
 }

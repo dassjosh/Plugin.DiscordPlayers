@@ -1,32 +1,74 @@
+using System;
+using System.IO;
 using DiscordPlayersPlugin.Enums;
 using DiscordPlayersPlugin.Plugins;
+using Oxide.Ext.Discord.Cache;
 using Oxide.Ext.Discord.Extensions;
+using ProtoBuf;
 
 namespace DiscordPlayersPlugin.State
 {
+    [ProtoContract]
     public class MessageState
     {
-        public int Page;
+        [ProtoMember(1)]
+        public short Page;
+        
+        [ProtoMember(2)]
         public SortBy Sort;
+        
+        [ProtoMember(3)]
+        public string Command;
 
-        public void NextPage()
+        private MessageState() { }
+
+        public static MessageState CreateNew(string command)
         {
-            Page++;
+            return new MessageState
+            {
+                Command = command
+            };
+        }
+        
+        public static MessageState Create(string base64)
+        {
+            try
+            {
+                byte[] data = Convert.FromBase64String(base64);
+                MemoryStream stream = DiscordPlayers.Instance.Pool.GetMemoryStream();
+                stream.Write(data, 0, data.Length);
+                stream.Position = 0;
+                MessageState state = Serializer.Deserialize<MessageState>(stream);
+                DiscordPlayers.Instance.Pool.FreeMemoryStream(stream);
+                return state;
+            }
+            catch (Exception ex)
+            {
+                DiscordPlayers.Instance.PrintError($"An error occured parsing state. State: {base64}. Exception:\n{ex}");
+                return null;
+            }
         }
 
-        public void PreviousPage()
+        public string CreateBase64String()
         {
-            Page--;
+            MemoryStream stream = DiscordPlayers.Instance.Pool.GetMemoryStream();
+            Serializer.Serialize(stream, this);
+            string base64 = Convert.ToBase64String(stream.ToArray());
+            DiscordPlayers.Instance.Pool.FreeMemoryStream(stream);
+            return base64;
         }
 
-        public void ClampPage(int maxPage)
-        {
-            Page = Page.Clamp(0, maxPage);
-        }
+        public void NextPage() => Page++;
 
-        public void NextSort()
+        public void PreviousPage() => Page--;
+
+        public void ClampPage(short maxPage) => Page = Page.Clamp((short)0, maxPage);
+
+        public void NextSort() => Sort = EnumCache<SortBy>.Instance.Next(Sort);
+
+        public override string ToString()
         {
-            Sort = DiscordPlayers.Instance.NextEnum(Sort, DiscordPlayers.Instance.SortByList);
+            return $"{{ Command = '{Command}' Sort = {Sort.ToString()} Page = {Page} }}";
         }
     }
 }

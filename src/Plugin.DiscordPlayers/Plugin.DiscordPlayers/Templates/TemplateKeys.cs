@@ -7,6 +7,7 @@ namespace DiscordPlayersPlugin.Templates
             private const string Base = nameof(Errors) + ".";
 
             public const string UnknownState = Base + nameof(UnknownState);
+            public const string UnknownCommand = Base + nameof(UnknownCommand);
         }
     }
 }
