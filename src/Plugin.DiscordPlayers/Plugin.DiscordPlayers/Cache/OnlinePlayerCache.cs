@@ -40,9 +40,9 @@ namespace DiscordPlayersPlugin.Cache
 
         public List<IPlayer> GetList(SortBy sort, bool includeAdmin)
         {
-            var list = sort == SortBy.Time ? _byOnlineTime.GetList(includeAdmin) : _byNameCache.GetList(includeAdmin);
-            return Enumerable.Range(0, 100).Select(i => list[0]).ToList();
-            //return list;
+            List<IPlayer> list = sort == SortBy.Time ? _byOnlineTime.GetList(includeAdmin) : _byNameCache.GetList(includeAdmin);
+            //return Enumerable.Range(0, 100).Select(i => list[0]).ToList();
+            return list;
         }
         
         public void OnUserConnected(IPlayer player)

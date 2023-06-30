@@ -27,8 +27,7 @@ namespace DiscordPlayersPlugin.Plugins
                     Command = "players",
                     ShowAdmins = true,
                     AllowInDm = true,
-                    EmbedFieldLimit = 25,
-                    EmbedsPerMessage = 1
+                    EmbedFieldLimit = 25
                 });
 
                 config.CommandMessages.Add(new CommandSettings
@@ -36,8 +35,7 @@ namespace DiscordPlayersPlugin.Plugins
                     Command = "playersadmin",
                     ShowAdmins = true,
                     AllowInDm = true,
-                    EmbedFieldLimit = 25,
-                    EmbedsPerMessage = 1
+                    EmbedFieldLimit = 25
                 });
             }
             
@@ -48,22 +46,19 @@ namespace DiscordPlayersPlugin.Plugins
                     Enabled = false, 
                     ChannelId = new Snowflake(0), 
                     UpdateRate = 1f,
-                    EmbedFieldLimit = 25,
-                    EmbedsPerMessage = 1
+                    EmbedFieldLimit = 25
                 }
             };
 
             for (int index = 0; index < config.CommandMessages.Count; index++)
             {
                 CommandSettings settings = new CommandSettings(config.CommandMessages[index]);
-                settings.Initialize();
                 config.CommandMessages[index] = settings;
             }
 
             for (int index = 0; index < config.Permanent.Count; index++)
             {
                 PermanentMessageSettings settings = new PermanentMessageSettings(config.Permanent[index]);
-                settings.Initialize();
                 config.Permanent[index] = settings;
             }
 

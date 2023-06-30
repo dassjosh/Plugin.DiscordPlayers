@@ -42,17 +42,7 @@ namespace DiscordPlayersPlugin.Plugins
                     PrintWarning($"Players For Embed cannot be less than 0 for command {message.Command}");
                 }
 
-                if (message.EmbedsPerMessage > 10)
-                {
-                    PrintWarning($"Embeds Per Message cannot be greater than 10 for command {message.Command}");
-                }
-                else if (message.EmbedsPerMessage < 1)
-                {
-                    PrintWarning($"Embeds Per Message cannot be less than 1 for command {message.Command}");
-                }
-
                 message.EmbedFieldLimit = Mathf.Clamp(message.EmbedFieldLimit, 0, 25);
-                message.EmbedsPerMessage = Mathf.Clamp(message.EmbedsPerMessage, 1, 10);
             }
 
             Client.Connect(_discordSettings);

@@ -8,7 +8,6 @@ using Oxide.Ext.Discord.Entities.Interactions;
 using Oxide.Ext.Discord.Entities.Users;
 using Oxide.Ext.Discord.Extensions;
 using Oxide.Ext.Discord.Libraries.Placeholders;
-using Oxide.Ext.Discord.Libraries.Placeholders.Default;
 
 namespace DiscordPlayersPlugin.Plugins
 {
@@ -16,7 +15,6 @@ namespace DiscordPlayersPlugin.Plugins
     {
         public void RegisterPlaceholders()
         {
-            TimeSpanPlaceholders.RegisterPlaceholders(this, "discordplayers.duration", PlaceholderKeys.PlayerDuration);
             _placeholders.RegisterPlaceholder<int>(this, "discordplayers.player.index", PlaceholderKeys.PlayerIndex);
             _placeholders.RegisterPlaceholder<MessageState, int>(this, "discordplayers.state.page", GetPage);
             _placeholders.RegisterPlaceholder<MessageState, string>(this, "discordplayers.state.sort", GetSort);
@@ -25,7 +23,7 @@ namespace DiscordPlayersPlugin.Plugins
             _placeholders.RegisterPlaceholder<int>(this, "discordplayers.page.max", PlaceholderKeys.MaxPage);
         }
         
-        public int GetPage(MessageState embed) => embed.Page;
+        public int GetPage(MessageState embed) => embed.Page + 1;
         public string GetSort(PlaceholderState state, MessageState embed)
         {
             DiscordInteraction interaction = state.Data.Get<DiscordInteraction>();

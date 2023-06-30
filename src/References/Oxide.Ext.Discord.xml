@@ -782,7 +782,7 @@
         </member>
         <member name="T:Oxide.Ext.Discord.Builders.Interactions.AutoComplete.PlayerDisplayNameMode">
             <summary>
-            AutoComplete Player Search Options for <see cref="T:Oxide.Ext.Discord.Builders.Interactions.InteractionAutoCompleteBuilder"/>
+            Player Name Formatting options for <see cref="T:Oxide.Ext.Discord.Builders.Interactions.AutoComplete.PlayerNameFormatter"/>
             </summary>
         </member>
         <member name="F:Oxide.Ext.Discord.Builders.Interactions.AutoComplete.PlayerDisplayNameMode.Default">
@@ -790,12 +790,12 @@
             Defaults search options
             </summary>
         </member>
-        <member name="F:Oxide.Ext.Discord.Builders.Interactions.AutoComplete.PlayerDisplayNameMode.IncludeClanName">
+        <member name="F:Oxide.Ext.Discord.Builders.Interactions.AutoComplete.PlayerDisplayNameMode.Clan">
             <summary>
             Include Clan Name in search
             </summary>
         </member>
-        <member name="F:Oxide.Ext.Discord.Builders.Interactions.AutoComplete.PlayerDisplayNameMode.IncludePlayerId">
+        <member name="F:Oxide.Ext.Discord.Builders.Interactions.AutoComplete.PlayerDisplayNameMode.PlayerId">
             <summary>
             Include Steam ID
             </summary>
@@ -1395,11 +1395,11 @@
             <param name="embeds">Embeds to be added</param>
             <returns>This</returns>
         </member>
-        <member name="M:Oxide.Ext.Discord.Builders.Messages.BaseBuilders.BaseMessageBuilder`2.AddAllowedMentions(Oxide.Ext.Discord.Entities.Messages.AllowedMentions.AllowedMention)">
+        <member name="M:Oxide.Ext.Discord.Builders.Messages.BaseBuilders.BaseMessageBuilder`2.AddAllowedMentions(Oxide.Ext.Discord.Entities.Messages.AllowedMentions)">
             <summary>
-            Adds <see cref="T:Oxide.Ext.Discord.Entities.Messages.AllowedMentions.AllowedMention"/> to the response
+            Adds <see cref="T:Oxide.Ext.Discord.Entities.Messages.AllowedMentions"/> to the response
             </summary>
-            <param name="mention">Mentions to be added</param>
+            <param name="mentions">Mentions to be added</param>
             <returns>This</returns>
         </member>
         <member name="M:Oxide.Ext.Discord.Builders.Messages.BaseBuilders.BaseMessageBuilder`2.SuppressEmbeds">
@@ -1639,6 +1639,13 @@
             </summary>
             <param name="value">Value to get the next enum from</param>
             <returns>Next enum from the given value</returns>
+        </member>
+        <member name="M:Oxide.Ext.Discord.Cache.EnumCache`1.Previous(`0)">
+            <summary>
+            Returns the previous enum values.
+            </summary>
+            <param name="value">Value to get the previous enum from</param>
+            <returns>Previous enum from the given value</returns>
         </member>
         <member name="T:Oxide.Ext.Discord.Cache.FileAttachmentCache">
             <summary>
@@ -2143,7 +2150,7 @@
         <member name="P:Oxide.Ext.Discord.Connections.BotConnection.LogLevel">
             <summary>
             Discord Extension Logging Level.
-            See <see cref="P:Oxide.Ext.Discord.Connections.BotConnection.LogLevel"/>
+            See <see cref="T:Oxide.Ext.Discord.Logging.DiscordLogLevel"/>
             </summary>
         </member>
         <member name="P:Oxide.Ext.Discord.Connections.BotConnection.HiddenToken">
@@ -3458,8 +3465,8 @@
         </member>
         <member name="P:Oxide.Ext.Discord.Entities.Activities.DiscordActivity.Emoji">
             <summary>
-            tTe emoji used for a custom status
-            See <see cref="P:Oxide.Ext.Discord.Entities.Activities.DiscordActivity.Emoji"/>
+            The emoji used for a custom status
+            See <see cref="T:Oxide.Ext.Discord.Entities.Emojis.DiscordEmoji"/>
             </summary>
         </member>
         <member name="P:Oxide.Ext.Discord.Entities.Activities.DiscordActivity.Party">
@@ -4011,7 +4018,7 @@
         <member name="M:Oxide.Ext.Discord.Entities.Applications.DiscordApplication.HasApplicationFlag(Oxide.Ext.Discord.Entities.Applications.ApplicationFlags)">
             <summary>
             Returns if the given application has the passed in application flag
-            If <see cref="P:Oxide.Ext.Discord.Entities.Applications.DiscordApplication.Flags"/>  is null false is returned
+            If <see cref="P:Oxide.Ext.Discord.Entities.Applications.DiscordApplication.Flags"/> is null false is returned
             </summary>
             <param name="flag">Flag to compare against</param>
             <returns>True of application has flag; False Otherwise</returns>
@@ -6924,7 +6931,7 @@
         <member name="P:Oxide.Ext.Discord.Entities.Gateway.Events.GatewayReadyEvent.Application">
             <summary>
             Contains id and flags
-            See <see cref="P:Oxide.Ext.Discord.Entities.Gateway.Events.GatewayReadyEvent.Application"/>
+            See <see cref="T:Oxide.Ext.Discord.Entities.Applications.DiscordApplication"/>
             </summary>
         </member>
         <member name="T:Oxide.Ext.Discord.Entities.Gateway.Events.GatewayResumedEvent">
@@ -7882,7 +7889,7 @@
         <member name="P:Oxide.Ext.Discord.Entities.Guilds.DiscordGuild.SystemChannelFlags">
             <summary>
             System channel flags
-            See <see cref="P:Oxide.Ext.Discord.Entities.Guilds.DiscordGuild.SystemChannelFlags"/>
+            See <see cref="T:Oxide.Ext.Discord.Entities.Guilds.SystemChannelFlags"/>
             </summary>
         </member>
         <member name="P:Oxide.Ext.Discord.Entities.Guilds.DiscordGuild.RulesChannelId">
@@ -12426,13 +12433,13 @@
         <member name="P:Oxide.Ext.Discord.Entities.Invites.DiscordInvite.Guild">
             <summary>
             The guild this invite is for
-            See <see cref="P:Oxide.Ext.Discord.Entities.Invites.DiscordInvite.Guild"/>
+            See <see cref="T:Oxide.Ext.Discord.Entities.Guilds.DiscordGuild"/>
             </summary>
         </member>
         <member name="P:Oxide.Ext.Discord.Entities.Invites.DiscordInvite.Channel">
             <summary>
             The channel this invite is for
-            See <see cref="P:Oxide.Ext.Discord.Entities.Invites.DiscordInvite.Channel"/>
+            See <see cref="T:Oxide.Ext.Discord.Entities.Channels.DiscordChannel"/>
             </summary>
         </member>
         <member name="P:Oxide.Ext.Discord.Entities.Invites.DiscordInvite.Inviter">
@@ -12589,58 +12596,58 @@
             Invite is for a go live stream
             </summary>
         </member>
-        <member name="T:Oxide.Ext.Discord.Entities.Messages.AllowedMentions.AllowedMention">
+        <member name="T:Oxide.Ext.Discord.Entities.Messages.AllowedMentions">
             <summary>
             Represents a <a href="https://discord.com/developers/docs/resources/channel#allowed-mentions-object">Allowed Mention Types</a>
             </summary>
         </member>
-        <member name="P:Oxide.Ext.Discord.Entities.Messages.AllowedMentions.AllowedMention.AllowedTypes">
+        <member name="P:Oxide.Ext.Discord.Entities.Messages.AllowedMentions.AllowedTypes">
             <summary>
             An array of allowed mention types to parse from the content.
-            <see cref="T:Oxide.Ext.Discord.Entities.Messages.AllowedMentions.AllowedMentionTypes"/>
+            <see cref="T:Oxide.Ext.Discord.Entities.Messages.AllowedMentionTypes"/>
             </summary>
         </member>
-        <member name="P:Oxide.Ext.Discord.Entities.Messages.AllowedMentions.AllowedMention.Roles">
+        <member name="P:Oxide.Ext.Discord.Entities.Messages.AllowedMentions.Roles">
             <summary>
             Array of Role IDs to mention (Max size of 100)
             </summary>
         </member>
-        <member name="P:Oxide.Ext.Discord.Entities.Messages.AllowedMentions.AllowedMention.Users">
+        <member name="P:Oxide.Ext.Discord.Entities.Messages.AllowedMentions.Users">
             <summary>
             Array of User IDs to mention (Max size of 100)
             </summary>
         </member>
-        <member name="P:Oxide.Ext.Discord.Entities.Messages.AllowedMentions.AllowedMention.RepliedUser">
+        <member name="P:Oxide.Ext.Discord.Entities.Messages.AllowedMentions.RepliedUser">
             <summary>
             For replies, whether to mention the author of the message being replied to (default false)
             </summary>
         </member>
-        <member name="F:Oxide.Ext.Discord.Entities.Messages.AllowedMentions.AllowedMention.None">
+        <member name="F:Oxide.Ext.Discord.Entities.Messages.AllowedMentions.None">
             <summary>
             Prevents all mentions
             </summary>
         </member>
-        <member name="T:Oxide.Ext.Discord.Entities.Messages.AllowedMentions.AllowedMentionTypes">
+        <member name="T:Oxide.Ext.Discord.Entities.Messages.AllowedMentionTypes">
             <summary>
              Represents a <a href="https://discord.com/developers/docs/resources/channel#allowed-mentions-object-allowed-mention-types">Allowed Mention Types</a> for a message
             </summary>
         </member>
-        <member name="F:Oxide.Ext.Discord.Entities.Messages.AllowedMentions.AllowedMentionTypes.Unknown">
+        <member name="F:Oxide.Ext.Discord.Entities.Messages.AllowedMentionTypes.Unknown">
             <summary>
             Discord Extension doesn't currently support this allowed mention type.
             </summary>
         </member>
-        <member name="F:Oxide.Ext.Discord.Entities.Messages.AllowedMentions.AllowedMentionTypes.Roles">
+        <member name="F:Oxide.Ext.Discord.Entities.Messages.AllowedMentionTypes.Roles">
             <summary>
             Controls role mentions
             </summary>
         </member>
-        <member name="F:Oxide.Ext.Discord.Entities.Messages.AllowedMentions.AllowedMentionTypes.Users">
+        <member name="F:Oxide.Ext.Discord.Entities.Messages.AllowedMentionTypes.Users">
             <summary>
             	Controls user mentions
             </summary>
         </member>
-        <member name="F:Oxide.Ext.Discord.Entities.Messages.AllowedMentions.AllowedMentionTypes.Everyone">
+        <member name="F:Oxide.Ext.Discord.Entities.Messages.AllowedMentionTypes.Everyone">
             <summary>
             Controls @everyone and @here mentions
             </summary>
@@ -12666,7 +12673,7 @@
             Embeds are deduplicated by URL. If a message contains multiple embeds with the same URL, only the first is shown.
             </summary>
         </member>
-        <member name="P:Oxide.Ext.Discord.Entities.Messages.BaseMessageCreate.AllowedMention">
+        <member name="P:Oxide.Ext.Discord.Entities.Messages.BaseMessageCreate.AllowedMentions">
             <summary>
             Allowed mentions for a message
             Allows for more granular control over mentions without various hacks to the message content. 
@@ -12806,7 +12813,7 @@
         <member name="P:Oxide.Ext.Discord.Entities.Messages.DiscordMessage.Embeds">
             <summary>
             Any embedded content
-            <see cref="P:Oxide.Ext.Discord.Entities.Messages.DiscordMessage.Embeds"/>
+            <see cref="T:Oxide.Ext.Discord.Entities.Messages.Embeds.DiscordEmbed"/>
             </summary>
         </member>
         <member name="P:Oxide.Ext.Discord.Entities.Messages.DiscordMessage.Reactions">
@@ -12845,7 +12852,7 @@
         <member name="P:Oxide.Ext.Discord.Entities.Messages.DiscordMessage.Application">
             <summary>
             Sent with Rich Presence-related chat embeds
-            <see cref="P:Oxide.Ext.Discord.Entities.Messages.DiscordMessage.Application"/>
+            <see cref="T:Oxide.Ext.Discord.Entities.Applications.DiscordApplication"/>
             </summary>
         </member>
         <member name="P:Oxide.Ext.Discord.Entities.Messages.DiscordMessage.ApplicationId">
@@ -12856,7 +12863,7 @@
         <member name="P:Oxide.Ext.Discord.Entities.Messages.DiscordMessage.MessageReference">
             <summary>
             Data showing the source of a crosspost, channel follow add, pin, or reply message
-            <see cref="P:Oxide.Ext.Discord.Entities.Messages.DiscordMessage.MessageReference"/>
+            <see cref="T:Oxide.Ext.Discord.Entities.Messages.MessageReference"/>
             </summary>
         </member>
         <member name="P:Oxide.Ext.Discord.Entities.Messages.DiscordMessage.Flags">
@@ -13835,7 +13842,7 @@
         <member name="P:Oxide.Ext.Discord.Entities.Messages.MessageReaction.Emoji">
             <summary>
             Emoji information
-            <see cref="P:Oxide.Ext.Discord.Entities.Messages.MessageReaction.Emoji"/>
+            <see cref="T:Oxide.Ext.Discord.Entities.Emojis.DiscordEmoji"/>
             </summary>
         </member>
         <member name="T:Oxide.Ext.Discord.Entities.Messages.MessageReference">
@@ -16043,7 +16050,7 @@
             <param name="messageId">Message ID to get</param>
             <param name="messageParams">Message Params</param>
         </member>
-        <member name="M:Oxide.Ext.Discord.Entities.Webhooks.DiscordWebhook.EditWebhookMessage(Oxide.Ext.Discord.Clients.DiscordClient,Oxide.Ext.Discord.Entities.Snowflake,Oxide.Ext.Discord.Entities.Messages.DiscordMessage,Oxide.Ext.Discord.Entities.Webhooks.WebhookMessageParams)">
+        <member name="M:Oxide.Ext.Discord.Entities.Webhooks.DiscordWebhook.EditWebhookMessage(Oxide.Ext.Discord.Clients.DiscordClient,Oxide.Ext.Discord.Entities.Snowflake,Oxide.Ext.Discord.Entities.Webhooks.WebhookEditMessage,Oxide.Ext.Discord.Entities.Webhooks.WebhookMessageParams)">
             <summary>
             Edits a previously-sent webhook message from the same token.
             See <a href="https://discord.com/developers/docs/resources/webhook#edit-webhook-message">Edit Webhook Message</a>
@@ -16053,7 +16060,7 @@
             <param name="messageParams">Message Params</param>
             <param name="message">The updated message</param>
         </member>
-        <member name="M:Oxide.Ext.Discord.Entities.Webhooks.DiscordWebhook.EditWebhookMessageGlobalTemplate(Oxide.Ext.Discord.Clients.DiscordClient,Oxide.Ext.Discord.Entities.Snowflake,Oxide.Core.Plugins.Plugin,System.String,Oxide.Ext.Discord.Entities.Messages.DiscordMessage,Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderData,Oxide.Ext.Discord.Entities.Webhooks.WebhookMessageParams)">
+        <member name="M:Oxide.Ext.Discord.Entities.Webhooks.DiscordWebhook.EditWebhookMessageGlobalTemplate(Oxide.Ext.Discord.Clients.DiscordClient,Oxide.Ext.Discord.Entities.Snowflake,Oxide.Core.Plugins.Plugin,System.String,Oxide.Ext.Discord.Entities.Webhooks.WebhookEditMessage,Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderData,Oxide.Ext.Discord.Entities.Webhooks.WebhookMessageParams)">
             <summary>
             Edit a message from a webhook using a global message template
             </summary>
@@ -16065,7 +16072,7 @@
             <param name="placeholders">Placeholders to apply (optional)</param>
             <param name="messageParams">Message Params</param>
         </member>
-        <member name="M:Oxide.Ext.Discord.Entities.Webhooks.DiscordWebhook.EditWebhookMessageTemplate(Oxide.Ext.Discord.Clients.DiscordClient,Oxide.Ext.Discord.Entities.Snowflake,Oxide.Core.Plugins.Plugin,System.String,System.String,Oxide.Ext.Discord.Entities.Messages.DiscordMessage,Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderData,Oxide.Ext.Discord.Entities.Webhooks.WebhookMessageParams)">
+        <member name="M:Oxide.Ext.Discord.Entities.Webhooks.DiscordWebhook.EditWebhookMessageTemplate(Oxide.Ext.Discord.Clients.DiscordClient,Oxide.Ext.Discord.Entities.Snowflake,Oxide.Core.Plugins.Plugin,System.String,System.String,Oxide.Ext.Discord.Entities.Webhooks.WebhookEditMessage,Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderData,Oxide.Ext.Discord.Entities.Webhooks.WebhookMessageParams)">
             <summary>
             Edit a message from a webhook using a localized message template
             </summary>
@@ -17602,6 +17609,12 @@
         <member name="P:Oxide.Ext.Discord.Interfaces.Entities.Messages.IDiscordMessageTemplate.Content">
             <summary>
             Content of the message
+            </summary>
+        </member>
+        <member name="P:Oxide.Ext.Discord.Interfaces.Entities.Messages.IDiscordMessageTemplate.AllowedMentions">
+            <summary>
+            Allowed mentions for a message
+            Allows for more granular control over mentions without various hacks to the message content. 
             </summary>
         </member>
         <member name="P:Oxide.Ext.Discord.Interfaces.Entities.Messages.IDiscordMessageTemplate.Embeds">
@@ -19457,7 +19470,7 @@
             <see cref="P:Oxide.Core.Libraries.Covalence.IPlayer.Id"/> placeholder
             </summary>
         </member>
-        <member name="M:Oxide.Ext.Discord.Libraries.Placeholders.Default.PlayerPlaceholders.Name(Oxide.Core.Libraries.Covalence.IPlayer)">
+        <member name="M:Oxide.Ext.Discord.Libraries.Placeholders.Default.PlayerPlaceholders.Name(Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderState,Oxide.Core.Libraries.Covalence.IPlayer)">
             <summary>
             <see cref="P:Oxide.Core.Libraries.Covalence.IPlayer.Name"/> placeholder
             </summary>
@@ -19493,6 +19506,13 @@
             </summary>
         </member>
         <member name="M:Oxide.Ext.Discord.Libraries.Placeholders.Default.PlayerPlaceholders.Groups(Oxide.Core.Libraries.Covalence.IPlayer)">
+            <summary>
+            Player Groups Placeholder
+            </summary>
+            <param name="player"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Oxide.Ext.Discord.Libraries.Placeholders.Default.PlayerPlaceholders.ClanTag(Oxide.Core.Libraries.Covalence.IPlayer)">
             <summary>
             Player Groups Placeholder
             </summary>
@@ -19876,12 +19896,13 @@
             Discord Placeholders Library
             </summary>
         </member>
-        <member name="M:Oxide.Ext.Discord.Libraries.Placeholders.DiscordPlaceholders.ProcessPlaceholders(System.String,Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderData)">
+        <member name="M:Oxide.Ext.Discord.Libraries.Placeholders.DiscordPlaceholders.ProcessPlaceholders(System.String,Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderData,System.Boolean)">
             <summary>
             Process placeholders for the given text.
             </summary>
             <param name="text">Text to process placeholders for</param>
             <param name="data">Placeholder Data for the placeholders</param>
+            <param name="autoDispose">Automatically dispose <see cref="T:Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderData"/> on completion. <see cref="T:Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderData"/> must also have AutoPool enabled</param>
             <returns>string with placeholders replaced. If no placeholders are found the original string is returned</returns>
         </member>
         <member name="M:Oxide.Ext.Discord.Libraries.Placeholders.DiscordPlaceholders.CreateData(Oxide.Core.Plugins.Plugin)">
@@ -20211,15 +20232,6 @@
             <param name="builder"><see cref="T:System.Text.StringBuilder"/> for the placeholder</param>
             <param name="placeholderState"><see cref="T:Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderState"/> for the placeholder</param>
             <param name="position"><see cref="T:Oxide.Core.Libraries.Covalence.GenericPosition"/> position to format and replace</param>
-        </member>
-        <member name="M:Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderFormatting.ApplyPlaceholder(System.String,Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderData)">
-            <summary>
-            Applies the placeholder to the text
-            If <see cref="T:Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderData"/> is null text is returned and no placeholders are processed
-            </summary>
-            <param name="text">Text to apply placeholders to</param>
-            <param name="data"><see cref="T:Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderData"/> for the placeholder</param>
-            <returns></returns>
         </member>
         <member name="T:Oxide.Ext.Discord.Libraries.Placeholders.PlaceholderState">
             <summary>

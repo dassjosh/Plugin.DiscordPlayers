@@ -78,9 +78,9 @@ namespace DiscordPlayersPlugin.Plugins
             CommandCreate cmd = builder.Build();
             DiscordCommandLocalization loc = builder.BuildCommandLocalization();
 
-            _localizations.RegisterCommandLocalizationAsync(this, settings.NameCache.TemplateName, loc, new TemplateVersion(1, 0, 0), new TemplateVersion(1, 0, 0)).Then(() =>
+            _localizations.RegisterCommandLocalizationAsync(this, settings.GetTemplateName(), loc, new TemplateVersion(1, 0, 0), new TemplateVersion(1, 0, 0)).Then(() =>
             {
-                _localizations.ApplyCommandLocalizationsAsync(this, cmd, settings.NameCache.TemplateName).Then(() =>
+                _localizations.ApplyCommandLocalizationsAsync(this, cmd, settings.GetTemplateName()).Then(() =>
                 {
                     Client.Bot.Application.CreateGlobalCommand(Client, builder.Build()).Then(appCommand =>
                     {
@@ -222,7 +222,6 @@ namespace DiscordPlayersPlugin.Plugins
         {
             CreateMessage<InteractionCallbackData>(cache, interaction, null, create =>
             {
-                Puts("A");
                 interaction.CreateResponse(Client, new InteractionResponse
                 {
                     Type = InteractionResponseType.UpdateMessage,
