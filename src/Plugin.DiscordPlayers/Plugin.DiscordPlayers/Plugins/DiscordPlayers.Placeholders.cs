@@ -1,3 +1,4 @@
+using System;
 using DiscordPlayersPlugin.Cache;
 using DiscordPlayersPlugin.Enums;
 using DiscordPlayersPlugin.Lang;
@@ -15,12 +16,12 @@ namespace DiscordPlayersPlugin.Plugins
     {
         public void RegisterPlaceholders()
         {
-            _placeholders.RegisterPlaceholder<int>(this, "discordplayers.player.index", PlaceholderKeys.PlayerIndex);
-            _placeholders.RegisterPlaceholder<MessageState, int>(this, "discordplayers.state.page", GetPage);
-            _placeholders.RegisterPlaceholder<MessageState, string>(this, "discordplayers.state.sort", GetSort);
-            _placeholders.RegisterPlaceholder<string>(this, "discordplayers.command.id", PlaceholderKeys.CommandId);
-            _placeholders.RegisterPlaceholder<string>(this, "discordplayers.command.name", PlaceholderKeys.CommandName);
-            _placeholders.RegisterPlaceholder<int>(this, "discordplayers.page.max", PlaceholderKeys.MaxPage);
+            _placeholders.RegisterPlaceholder<int>(this,PlaceholderKeys.PlayerIndex, PlaceholderDataKeys.PlayerIndex);
+            _placeholders.RegisterPlaceholder<MessageState, int>(this, PlaceholderKeys.Page, PlaceholderDataKeys.MessageState, GetPage);
+            _placeholders.RegisterPlaceholder<MessageState, string>(this, PlaceholderKeys.SortState, GetSort);
+            _placeholders.RegisterPlaceholder<string>(this, PlaceholderKeys.CommandId, PlaceholderDataKeys.CommandId);
+            _placeholders.RegisterPlaceholder<string>(this,PlaceholderKeys.CommandName, PlaceholderDataKeys.CommandName);
+            _placeholders.RegisterPlaceholder<int>(this, PlaceholderKeys.MaxPage, PlaceholderDataKeys.MaxPage);
         }
         
         public int GetPage(MessageState embed) => embed.Page + 1;
@@ -34,11 +35,14 @@ namespace DiscordPlayersPlugin.Plugins
         public PlaceholderData CloneForPlayer(PlaceholderData source, IPlayer player, int index)
         {
             DiscordUser user = player.GetDiscordUser();
+            var onlineDuration = _playerCache.GetOnlineDuration(player);
             return source.Clone()
-                         .AddPlayer(player)
+                         .RemoveUser()
                          .AddUser(user)
-                         .Add(PlaceholderKeys.PlayerIndex, index)
-                         .Add(PlaceholderKeys.PlayerDuration, _playerCache.GetOnlineDuration(player));
+                         .AddPlayer(player)
+                         .Add(PlaceholderDataKeys.PlayerIndex, index)
+                         .Add(PlaceholderDataKeys.PlayerDuration, onlineDuration)
+                         .AddTimestamp(DateTimeOffset.UtcNow - onlineDuration);
         }
 
         public PlaceholderData GetDefault(DiscordInteraction interaction)
@@ -49,15 +53,14 @@ namespace DiscordPlayersPlugin.Plugins
         public PlaceholderData GetDefault(MessageCache cache, DiscordInteraction interaction)
         {
             return GetDefault(interaction)
-                   .Add(nameof(MessageCache), cache)
-                   .Add(nameof(MessageState), cache.State);
+                .Add(PlaceholderDataKeys.MessageState, cache.State);
         }
         
         public PlaceholderData GetDefault(MessageCache cache, DiscordInteraction interaction, int maxPage)
         {
             return GetDefault(cache, interaction)
-                   .Add(PlaceholderKeys.MaxPage, maxPage)
-                   .Add(PlaceholderKeys.CommandId, cache.State.CreateBase64String());
+                   .Add(PlaceholderDataKeys.MaxPage, maxPage)
+                   .Add(PlaceholderDataKeys.CommandId, cache.State.CreateBase64String());
         }
     }
 }

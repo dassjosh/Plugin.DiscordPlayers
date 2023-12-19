@@ -3,8 +3,6 @@ using Newtonsoft.Json.Converters;
 using Oxide.Core;
 using Oxide.Core.Libraries.Covalence;
 using Oxide.Core.Plugins;
-using Oxide.Ext.Discord;
-using Oxide.Ext.Discord.Attributes;
 using Oxide.Ext.Discord.Attributes.ApplicationCommands;
 using Oxide.Ext.Discord.Attributes.Pooling;
 using Oxide.Ext.Discord.Builders.ApplicationCommands;
@@ -16,6 +14,7 @@ using Oxide.Ext.Discord.Entities;
 using Oxide.Ext.Discord.Entities.Api;
 using Oxide.Ext.Discord.Entities.Applications;
 using Oxide.Ext.Discord.Entities.Channels;
+using Oxide.Ext.Discord.Entities.Gateway;
 using Oxide.Ext.Discord.Entities.Gateway.Events;
 using Oxide.Ext.Discord.Entities.Guilds;
 using Oxide.Ext.Discord.Entities.Interactions;
@@ -32,6 +31,7 @@ using Oxide.Ext.Discord.Interfaces.Entities.Messages;
 using Oxide.Ext.Discord.Interfaces.Promises;
 using Oxide.Ext.Discord.Libraries.AppCommands;
 using Oxide.Ext.Discord.Libraries.Placeholders;
+using Oxide.Ext.Discord.Libraries.Placeholders.Keys;
 using Oxide.Ext.Discord.Libraries.Templates;
 using Oxide.Ext.Discord.Libraries.Templates.Commands;
 using Oxide.Ext.Discord.Libraries.Templates.Components;
@@ -166,7 +166,9 @@ namespace Oxide.Plugins
             CommandCreate cmd = builder.Build();
             DiscordCommandLocalization loc = builder.BuildCommandLocalization();
             
-            _localizations.RegisterCommandLocalizationAsync(this, settings.GetTemplateName(), loc, new TemplateVersion(1, 0, 0), new TemplateVersion(1, 0, 0)).Then(() =>
+            _commandCache[command] = settings;
+            
+            _localizations.RegisterCommandLocalizationAsync(this, settings.GetTemplateName(), loc, new TemplateVersion(1, 0, 0), new TemplateVersion(1, 0, 0)).Then(_ =>
             {
                 _localizations.ApplyCommandLocalizationsAsync(this, cmd, settings.GetTemplateName()).Then(() =>
                 {
@@ -197,13 +199,11 @@ namespace Oxide.Plugins
                     continue;
                 }
                 
+                _commandCache[config.GetTemplateName()] = config;
                 PermanentMessageData existing = _pluginData.GetPermanentMessage(config);
                 if (existing != null)
                 {
-                    channel.GetMessage(Client, existing.MessageId).Then(message =>
-                    {
-                        _permanentState[message.Id] = new PermanentMessageHandler(Client, new MessageCache(config), config.UpdateRate, message);
-                    }).Catch<ResponseError>(error =>
+                    channel.GetMessage(Client, existing.MessageId).Catch<ResponseError>(error =>
                     {
                         if (error.HttpStatusCode == DiscordHttpStatusCode.NotFound)
                         {
@@ -232,7 +232,6 @@ namespace Oxide.Plugins
                         MessageId = message.Id
                     });
                     SaveData();
-                    _permanentState[message.Id] = new PermanentMessageHandler(Client, cache, config.UpdateRate, message);
                 });
             });
         }
@@ -242,6 +241,7 @@ namespace Oxide.Plugins
             MessageCache cache = GetCache(interaction);
             if (cache == null)
             {
+                Puts("Cache is null!!");
                 return;
             }
             
@@ -322,11 +322,6 @@ namespace Oxide.Plugins
         #region Plugins\DiscordPlayers.Fields.cs
         public DiscordClient Client { get; set; }
         
-        #pragma warning disable CS0649
-        // ReSharper disable once InconsistentNaming
-        [PluginReference] private Plugin Clans;
-        #pragma warning restore CS0649
-        
         private PluginConfig _pluginConfig; //Plugin Config
         private PluginData _pluginData;
         
@@ -341,8 +336,8 @@ namespace Oxide.Plugins
         
         private readonly BotConnection _discordSettings = new BotConnection();
         
-        private readonly Hash<Snowflake, PermanentMessageHandler> _permanentState = new Hash<Snowflake, PermanentMessageHandler>();
         private readonly Hash<Snowflake, MessageCache> _messageCache = new Hash<Snowflake, MessageCache>();
+        private readonly Hash<string, BaseMessageSettings> _commandCache = new Hash<string, BaseMessageSettings>();
         private readonly OnlinePlayerCache _playerCache = new OnlinePlayerCache();
         
         private const string BaseCommand = nameof(DiscordPlayers) + ".";
@@ -362,24 +357,23 @@ namespace Oxide.Plugins
         public MessageCache GetCache(DiscordInteraction interaction)
         {
             DiscordMessage message = interaction.Message;
-            CommandSettings command;
-            if (message == null)
+            BaseMessageSettings command;
+            if (interaction.Type == InteractionType.ApplicationCommand)
             {
                 InteractionDataParsed args = interaction.Parsed;
-                command = _pluginConfig.CommandMessages.FirstOrDefault(c => c.Command == args.Command);
+                command = _commandCache[args.Command];
+                Puts($"Command ({args.Command}) = {command != null}");
                 return command != null ? new MessageCache(command) : null;
             }
-            string customId = interaction.Data.CustomId;
             
+            string customId = interaction.Data.CustomId;
             MessageCache cache = _messageCache[message.Id];
             if (cache != null)
             {
                 return cache;
             }
             
-            Puts(customId);
             string base64 = customId.Substring(customId.LastIndexOf(" ", StringComparison.Ordinal) + 1);
-            Puts($"{base64}");
             MessageState state = MessageState.Create(base64);
             if (state == null)
             {
@@ -387,11 +381,10 @@ namespace Oxide.Plugins
                 return null;
             }
             
-            Puts(state.ToString());
-            command = _pluginConfig.CommandMessages.FirstOrDefault(c => c.Command == state.Command);
+            command = _commandCache[state.Command];
             if (command == null)
             {
-                SendResponse(interaction, TemplateKeys.Errors.UnknownCommand, GetDefault(interaction).Add(PlaceholderKeys.CommandName, state.Command));
+                SendResponse(interaction, TemplateKeys.Errors.UnknownCommand, GetDefault(interaction).Add(PlaceholderDataKeys.CommandName, state.Command));
                 return null;
             }
             
@@ -556,12 +549,12 @@ namespace Oxide.Plugins
         #region Plugins\DiscordPlayers.Placeholders.cs
         public void RegisterPlaceholders()
         {
-            _placeholders.RegisterPlaceholder<int>(this, "discordplayers.player.index", PlaceholderKeys.PlayerIndex);
-            _placeholders.RegisterPlaceholder<MessageState, int>(this, "discordplayers.state.page", GetPage);
-            _placeholders.RegisterPlaceholder<MessageState, string>(this, "discordplayers.state.sort", GetSort);
-            _placeholders.RegisterPlaceholder<string>(this, "discordplayers.command.id", PlaceholderKeys.CommandId);
-            _placeholders.RegisterPlaceholder<string>(this, "discordplayers.command.name", PlaceholderKeys.CommandName);
-            _placeholders.RegisterPlaceholder<int>(this, "discordplayers.page.max", PlaceholderKeys.MaxPage);
+            _placeholders.RegisterPlaceholder<int>(this,PlaceholderKeys.PlayerIndex, PlaceholderDataKeys.PlayerIndex);
+            _placeholders.RegisterPlaceholder<MessageState, int>(this, PlaceholderKeys.Page, PlaceholderDataKeys.MessageState, GetPage);
+            _placeholders.RegisterPlaceholder<MessageState, string>(this, PlaceholderKeys.SortState, GetSort);
+            _placeholders.RegisterPlaceholder<string>(this, PlaceholderKeys.CommandId, PlaceholderDataKeys.CommandId);
+            _placeholders.RegisterPlaceholder<string>(this,PlaceholderKeys.CommandName, PlaceholderDataKeys.CommandName);
+            _placeholders.RegisterPlaceholder<int>(this, PlaceholderKeys.MaxPage, PlaceholderDataKeys.MaxPage);
         }
         
         public int GetPage(MessageState embed) => embed.Page + 1;
@@ -575,11 +568,14 @@ namespace Oxide.Plugins
         public PlaceholderData CloneForPlayer(PlaceholderData source, IPlayer player, int index)
         {
             DiscordUser user = player.GetDiscordUser();
+            var onlineDuration = _playerCache.GetOnlineDuration(player);
             return source.Clone()
-            .AddPlayer(player)
+            .RemoveUser()
             .AddUser(user)
-            .Add(PlaceholderKeys.PlayerIndex, index)
-            .Add(PlaceholderKeys.PlayerDuration, _playerCache.GetOnlineDuration(player));
+            .AddPlayer(player)
+            .Add(PlaceholderDataKeys.PlayerIndex, index)
+            .Add(PlaceholderDataKeys.PlayerDuration, onlineDuration)
+            .AddTimestamp(DateTimeOffset.UtcNow - onlineDuration);
         }
         
         public PlaceholderData GetDefault(DiscordInteraction interaction)
@@ -590,15 +586,14 @@ namespace Oxide.Plugins
         public PlaceholderData GetDefault(MessageCache cache, DiscordInteraction interaction)
         {
             return GetDefault(interaction)
-            .Add(nameof(MessageCache), cache)
-            .Add(nameof(MessageState), cache.State);
+            .Add(PlaceholderDataKeys.MessageState, cache.State);
         }
         
         public PlaceholderData GetDefault(MessageCache cache, DiscordInteraction interaction, int maxPage)
         {
             return GetDefault(cache, interaction)
-            .Add(PlaceholderKeys.MaxPage, maxPage)
-            .Add(PlaceholderKeys.CommandId, cache.State.CreateBase64String());
+            .Add(PlaceholderDataKeys.MaxPage, maxPage)
+            .Add(PlaceholderDataKeys.CommandId, cache.State.CreateBase64String());
         }
         #endregion
 
@@ -608,6 +603,7 @@ namespace Oxide.Plugins
             Instance = this;
             _discordSettings.ApiToken = _pluginConfig.DiscordApiKey;
             _discordSettings.LogLevel = _pluginConfig.ExtensionDebugging;
+            _discordSettings.Intents = GatewayIntents.Guilds | GatewayIntents.GuildMembers;
             
             _pluginData = Interface.Oxide.DataFileSystem.ReadObject<PluginData>(Name) ?? new PluginData();
         }
@@ -677,7 +673,7 @@ namespace Oxide.Plugins
             DiscordMessageTemplate unknownState = CreateTemplateEmbed("Error: Failed to find a state for this message. Please create a new message.", DiscordColor.Danger);
             _templates.RegisterLocalizedTemplateAsync(this, TemplateKeys.Errors.UnknownState, unknownState, new TemplateVersion(1, 0, 0), new TemplateVersion(1, 0, 0));
             
-            DiscordMessageTemplate unknownCommand = CreateTemplateEmbed("Error: Command not found '{discordplayers.command.name}'. Please create a new message", DiscordColor.Danger);
+            DiscordMessageTemplate unknownCommand = CreateTemplateEmbed($"Error: Command not found '{PlaceholderKeys.CommandName}'. Please create a new message", DiscordColor.Danger);
             _templates.RegisterLocalizedTemplateAsync(this, TemplateKeys.Errors.UnknownCommand, unknownCommand, new TemplateVersion(1, 0, 0), new TemplateVersion(1, 0, 0));
         }
         
@@ -711,11 +707,11 @@ namespace Oxide.Plugins
                 Content = string.Empty,
                 Components =
                 {
-                    new ButtonTemplate("Back", ButtonStyle.Primary, $"{BackCommand} {{discordplayers.command.id}}", "⬅"),
-                    new ButtonTemplate("Page: {discordplayers.state.page}/{discordplayers.page.max}", ButtonStyle.Primary, "PAGE", false),
-                    new ButtonTemplate("Next", ButtonStyle.Primary, $"{ForwardCommand} {{discordplayers.command.id}}", "➡"),
-                    new ButtonTemplate("Refresh", ButtonStyle.Primary, $"{RefreshCommand} {{discordplayers.command.id}}", "🔄"),
-                    new ButtonTemplate("Sorted By: {discordplayers.state.sort}", ButtonStyle.Primary, $"{ChangeSort} {{discordplayers.command.id}}")
+                    new ButtonTemplate("Back", ButtonStyle.Primary, $"{BackCommand} {PlaceholderKeys.CommandId}", "⬅"),
+                    new ButtonTemplate($"Page: {PlaceholderKeys.Page}/{PlaceholderKeys.MaxPage}", ButtonStyle.Primary, "PAGE", false),
+                    new ButtonTemplate("Next", ButtonStyle.Primary, $"{ForwardCommand} {PlaceholderKeys.CommandId}", "➡"),
+                    new ButtonTemplate("Refresh", ButtonStyle.Primary, $"{RefreshCommand} {PlaceholderKeys.CommandId}", "🔄"),
+                    new ButtonTemplate($"Sorted By: {PlaceholderKeys.SortState}", ButtonStyle.Primary, $"{ChangeSort} {PlaceholderKeys.CommandId}")
                 }
             };
         }
@@ -724,14 +720,14 @@ namespace Oxide.Plugins
         {
             return new DiscordEmbedTemplate
             {
-                Title = "{server.name}",
-                Description = "{server.players}/{server.players.max} Online Players | {server.players.loading} Loading | {server.players.queued} Queued",
+                Title = $"{DefaultKeys.Server.Name}",
+                Description = $"{DefaultKeys.Server.Players}/{DefaultKeys.Server.MaxPlayers} Online Players | {{server.players.loading}} Loading | {{server.players.queued}} Queued",
                 Color = DiscordColor.Blurple.ToHex(),
                 TimeStamp = true,
                 Footer =
                 {
                     Enabled = true,
-                    Text = "{plugin.title} V{plugin.version} by {plugin.author}",
+                    Text = $"{DefaultKeys.Plugin.Name} V{DefaultKeys.Plugin.Version} by {DefaultKeys.Plugin.Author}",
                     IconUrl = PluginIcon
                 }
             };
@@ -739,17 +735,17 @@ namespace Oxide.Plugins
         
         public DiscordEmbedFieldTemplate GetDefaultFieldTemplate()
         {
-            return new DiscordEmbedFieldTemplate("{discordplayers.player.index} {player.name:clan}", "**Online For:** {timespan.hours}h {timespan.minutes}m {timespan.seconds}s");
+            return new DiscordEmbedFieldTemplate($"#{PlaceholderKeys.PlayerIndex} {DefaultKeys.Player.NameClan}", $"**Connected:** {DefaultKeys.Timespan.Hours} {DefaultKeys.Timespan.Minutes}m {DefaultKeys.Timespan.Seconds}s");
         }
         
         public DiscordEmbedFieldTemplate GetDefaultAdminFieldTemplate()
         {
-            return new DiscordEmbedFieldTemplate("#{discordplayers.player.index} {player.name:clan}",
-            "**Steam ID:**{player.id}\n" +
-            "**Online For:** {timespan.hours}h {timespan.minutes}m {timespan.seconds}s\n" +
-            "**Ping:** {player.ping}ms\n" +
-            "**Country:** {player.address.data!country}\n" +
-            "**User:** {user.mention}");
+            return new DiscordEmbedFieldTemplate($"#{PlaceholderKeys.PlayerIndex} {DefaultKeys.Player.NameClan}",
+            $"**Steam ID:**{DefaultKeys.Player.Id}\n" +
+            $"**Connected:** {DefaultKeys.Timespan.Hours} {DefaultKeys.Timespan.Minutes}m {DefaultKeys.Timespan.Seconds}s\n" +
+            $"**Ping:** {DefaultKeys.Player.Ping}ms\n" +
+            $"**Country:** {DefaultKeys.Player.Country}\n" +
+            $"**User:** {DefaultKeys.User.Mention}");
         }
         
         public DiscordMessageTemplate CreateTemplateEmbed(string description, DiscordColor color)
@@ -760,7 +756,7 @@ namespace Oxide.Plugins
                 {
                     new DiscordEmbedTemplate
                     {
-                        Description = $"[{{plugin.title}}] {description}",
+                        Description = $"[{DefaultKeys.Plugin.Title}] {description}",
                         Color = color.ToHex()
                     }
                 }
@@ -1091,14 +1087,27 @@ namespace Oxide.Plugins
         }
         #endregion
 
-        #region Placeholders\PlaceholderKeys.cs
-        public static class PlaceholderKeys
+        #region Placeholders\PlaceholderDataKeys.cs
+        public static class PlaceholderDataKeys
         {
-            public const string CommandId = "command.id";
-            public const string CommandName = "command.name";
-            public const string PlayerIndex = "player.index";
-            public const string PlayerDuration = "timespan";
-            public const string MaxPage = "page.max";
+            public static readonly PlaceholderDataKey CommandId = new PlaceholderDataKey("command.id");
+            public static readonly PlaceholderDataKey CommandName = new PlaceholderDataKey("command.name");
+            public static readonly PlaceholderDataKey PlayerIndex = new PlaceholderDataKey("player.index");
+            public static readonly PlaceholderDataKey PlayerDuration = new PlaceholderDataKey("timespan");
+            public static readonly PlaceholderDataKey MaxPage = new PlaceholderDataKey("page.max");
+            public static readonly PlaceholderDataKey MessageState = new PlaceholderDataKey("message.state");
+        }
+        #endregion
+
+        #region Placeholders\PlaceholderKeys.cs
+        public class PlaceholderKeys
+        {
+            public static readonly PlaceholderKey PlayerIndex = new PlaceholderKey(nameof(DiscordPlayers), "player.index");
+            public static readonly PlaceholderKey Page = new PlaceholderKey(nameof(DiscordPlayers), "state.page");
+            public static readonly PlaceholderKey SortState = new PlaceholderKey(nameof(DiscordPlayers), "state.sort");
+            public static readonly PlaceholderKey CommandId = new PlaceholderKey(nameof(DiscordPlayers), "command.id");
+            public static readonly PlaceholderKey CommandName = new PlaceholderKey(nameof(DiscordPlayers), "command.name");
+            public static readonly PlaceholderKey MaxPage = new PlaceholderKey(nameof(DiscordPlayers), "page.max");
         }
         #endregion
 

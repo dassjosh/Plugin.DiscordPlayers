@@ -1,8 +1,8 @@
-using System;
 using DiscordPlayersPlugin.Configuration;
 using DiscordPlayersPlugin.Data;
 using Oxide.Core;
 using Oxide.Core.Libraries.Covalence;
+using Oxide.Ext.Discord.Entities.Gateway;
 using UnityEngine;
 
 namespace DiscordPlayersPlugin.Plugins
@@ -14,6 +14,7 @@ namespace DiscordPlayersPlugin.Plugins
             Instance = this;
             _discordSettings.ApiToken = _pluginConfig.DiscordApiKey;
             _discordSettings.LogLevel = _pluginConfig.ExtensionDebugging;
+            _discordSettings.Intents = GatewayIntents.Guilds | GatewayIntents.GuildMembers;
 
             _pluginData = Interface.Oxide.DataFileSystem.ReadObject<PluginData>(Name) ?? new PluginData();
         }

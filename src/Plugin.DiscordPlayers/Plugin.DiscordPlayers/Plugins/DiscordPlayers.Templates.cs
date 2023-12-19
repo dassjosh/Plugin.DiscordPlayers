@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using DiscordPlayersPlugin.Configuration;
+using DiscordPlayersPlugin.Placeholders;
 using DiscordPlayersPlugin.Templates;
 using Oxide.Ext.Discord.Entities;
 using Oxide.Ext.Discord.Entities.Interactions.MessageComponents;
 using Oxide.Ext.Discord.Extensions;
+using Oxide.Ext.Discord.Libraries.Placeholders.Keys;
 using Oxide.Ext.Discord.Libraries.Templates;
 using Oxide.Ext.Discord.Libraries.Templates.Components;
 using Oxide.Ext.Discord.Libraries.Templates.Embeds;
@@ -30,7 +32,7 @@ namespace DiscordPlayersPlugin.Plugins
             DiscordMessageTemplate unknownState = CreateTemplateEmbed("Error: Failed to find a state for this message. Please create a new message.", DiscordColor.Danger);
             _templates.RegisterLocalizedTemplateAsync(this, TemplateKeys.Errors.UnknownState, unknownState, new TemplateVersion(1, 0, 0), new TemplateVersion(1, 0, 0));
             
-            DiscordMessageTemplate unknownCommand = CreateTemplateEmbed("Error: Command not found '{discordplayers.command.name}'. Please create a new message", DiscordColor.Danger);
+            DiscordMessageTemplate unknownCommand = CreateTemplateEmbed($"Error: Command not found '{PlaceholderKeys.CommandName}'. Please create a new message", DiscordColor.Danger);
             _templates.RegisterLocalizedTemplateAsync(this, TemplateKeys.Errors.UnknownCommand, unknownCommand, new TemplateVersion(1, 0, 0), new TemplateVersion(1, 0, 0));
         }
 
@@ -64,11 +66,11 @@ namespace DiscordPlayersPlugin.Plugins
                 Content = string.Empty,
                 Components =
                 {
-                    new ButtonTemplate("Back", ButtonStyle.Primary, $"{BackCommand} {{discordplayers.command.id}}", "⬅"),
-                    new ButtonTemplate("Page: {discordplayers.state.page}/{discordplayers.page.max}", ButtonStyle.Primary, "PAGE", false),
-                    new ButtonTemplate("Next", ButtonStyle.Primary, $"{ForwardCommand} {{discordplayers.command.id}}", "➡"),
-                    new ButtonTemplate("Refresh", ButtonStyle.Primary, $"{RefreshCommand} {{discordplayers.command.id}}", "🔄"),
-                    new ButtonTemplate("Sorted By: {discordplayers.state.sort}", ButtonStyle.Primary, $"{ChangeSort} {{discordplayers.command.id}}")
+                    new ButtonTemplate("Back", ButtonStyle.Primary, $"{BackCommand} {PlaceholderKeys.CommandId}", "⬅"),
+                    new ButtonTemplate($"Page: {PlaceholderKeys.Page}/{PlaceholderKeys.MaxPage}", ButtonStyle.Primary, "PAGE", false),
+                    new ButtonTemplate("Next", ButtonStyle.Primary, $"{ForwardCommand} {PlaceholderKeys.CommandId}", "➡"),
+                    new ButtonTemplate("Refresh", ButtonStyle.Primary, $"{RefreshCommand} {PlaceholderKeys.CommandId}", "🔄"),
+                    new ButtonTemplate($"Sorted By: {PlaceholderKeys.SortState}", ButtonStyle.Primary, $"{ChangeSort} {PlaceholderKeys.CommandId}")
                 }
             };
         }
@@ -77,14 +79,14 @@ namespace DiscordPlayersPlugin.Plugins
         {
             return new DiscordEmbedTemplate
             {
-                Title = "{server.name}",
-                Description = "{server.players}/{server.players.max} Online Players | {server.players.loading} Loading | {server.players.queued} Queued",
+                Title = $"{DefaultKeys.Server.Name}",
+                Description = $"{DefaultKeys.Server.Players}/{DefaultKeys.Server.MaxPlayers} Online Players | {{server.players.loading}} Loading | {{server.players.queued}} Queued",
                 Color = DiscordColor.Blurple.ToHex(),
                 TimeStamp = true,
                 Footer =
                 {
                     Enabled = true,
-                    Text = "{plugin.title} V{plugin.version} by {plugin.author}",
+                    Text = $"{DefaultKeys.Plugin.Name} V{DefaultKeys.Plugin.Version} by {DefaultKeys.Plugin.Author}",
                     IconUrl = PluginIcon
                 }
             };
@@ -92,17 +94,17 @@ namespace DiscordPlayersPlugin.Plugins
 
         public DiscordEmbedFieldTemplate GetDefaultFieldTemplate()
         {
-            return new DiscordEmbedFieldTemplate("{discordplayers.player.index} {player.name:clan}", "**Online For:** {timespan.hours}h {timespan.minutes}m {timespan.seconds}s");
+            return new DiscordEmbedFieldTemplate($"#{PlaceholderKeys.PlayerIndex} {DefaultKeys.Player.NameClan}", $"**Connected:** {DefaultKeys.Timespan.Hours} {DefaultKeys.Timespan.Minutes}m {DefaultKeys.Timespan.Seconds}s");
         }
         
         public DiscordEmbedFieldTemplate GetDefaultAdminFieldTemplate()
         {
-            return new DiscordEmbedFieldTemplate("#{discordplayers.player.index} {player.name:clan}", 
-                "**Steam ID:**{player.id}\n" +
-                "**Online For:** {timespan.hours}h {timespan.minutes}m {timespan.seconds}s\n" +
-                "**Ping:** {player.ping}ms\n" +
-                "**Country:** {player.address.data!country}\n" +
-                "**User:** {user.mention}");
+            return new DiscordEmbedFieldTemplate($"#{PlaceholderKeys.PlayerIndex} {DefaultKeys.Player.NameClan}", 
+                $"**Steam ID:**{DefaultKeys.Player.Id}\n" +
+                $"**Connected:** {DefaultKeys.Timespan.Hours} {DefaultKeys.Timespan.Minutes}m {DefaultKeys.Timespan.Seconds}s\n" +
+                $"**Ping:** {DefaultKeys.Player.Ping}ms\n" +
+                $"**Country:** {DefaultKeys.Player.Country}\n" +
+                $"**User:** {DefaultKeys.User.Mention}");
         }
         
         public DiscordMessageTemplate CreateTemplateEmbed(string description, DiscordColor color)
@@ -113,7 +115,7 @@ namespace DiscordPlayersPlugin.Plugins
                 {
                     new DiscordEmbedTemplate
                     {
-                        Description = $"[{{plugin.title}}] {description}",
+                        Description = $"[{DefaultKeys.Plugin.Title}] {description}",
                         Color = color.ToHex()
                     }
                 }

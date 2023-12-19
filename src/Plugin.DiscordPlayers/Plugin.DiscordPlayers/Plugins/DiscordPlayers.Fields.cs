@@ -1,12 +1,7 @@
-using System;
 using DiscordPlayersPlugin.Cache;
 using DiscordPlayersPlugin.Configuration;
 using DiscordPlayersPlugin.Data;
-using DiscordPlayersPlugin.Enums;
 using DiscordPlayersPlugin.Handlers;
-using Oxide.Core.Plugins;
-using Oxide.Ext.Discord;
-using Oxide.Ext.Discord.Attributes;
 using Oxide.Ext.Discord.Attributes.Pooling;
 using Oxide.Ext.Discord.Clients;
 using Oxide.Ext.Discord.Connections;
@@ -24,11 +19,6 @@ namespace DiscordPlayersPlugin.Plugins
     public partial class DiscordPlayers
     {
         public DiscordClient Client { get; set; }
-        
-#pragma warning disable CS0649
-        // ReSharper disable once InconsistentNaming
-        [PluginReference] private Plugin Clans;
-#pragma warning restore CS0649
 
         private PluginConfig _pluginConfig; //Plugin Config
         private PluginData _pluginData;
@@ -44,8 +34,8 @@ namespace DiscordPlayersPlugin.Plugins
 
         private readonly BotConnection _discordSettings = new BotConnection();
         
-        private readonly Hash<Snowflake, PermanentMessageHandler> _permanentState = new Hash<Snowflake, PermanentMessageHandler>();
         private readonly Hash<Snowflake, MessageCache> _messageCache = new Hash<Snowflake, MessageCache>();
+        private readonly Hash<string, BaseMessageSettings> _commandCache = new Hash<string, BaseMessageSettings>();
         private readonly OnlinePlayerCache _playerCache = new OnlinePlayerCache();
 
         private const string BaseCommand = nameof(DiscordPlayers) + ".";

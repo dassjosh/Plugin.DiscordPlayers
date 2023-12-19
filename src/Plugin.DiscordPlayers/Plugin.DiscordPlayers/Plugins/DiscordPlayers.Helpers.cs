@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using DiscordPlayersPlugin.Cache;
 using DiscordPlayersPlugin.Configuration;
 using DiscordPlayersPlugin.Placeholders;
@@ -20,36 +19,34 @@ namespace DiscordPlayersPlugin.Plugins
         public MessageCache GetCache(DiscordInteraction interaction)
         {
             DiscordMessage message = interaction.Message;
-            CommandSettings command;
-            if (message == null)
+            BaseMessageSettings command;
+            if (interaction.Type == InteractionType.ApplicationCommand)
             {
                 InteractionDataParsed args = interaction.Parsed;
-                command = _pluginConfig.CommandMessages.FirstOrDefault(c => c.Command == args.Command);
+                command = _commandCache[args.Command];
+                Puts($"Command ({args.Command}) = {command != null}");
                 return command != null ? new MessageCache(command) : null;
             }
-            string customId = interaction.Data.CustomId;
             
+            string customId = interaction.Data.CustomId;
             MessageCache cache = _messageCache[message.Id];
             if (cache != null)
             {
                 return cache;
             }
             
-            Puts(customId);
             string base64 = customId.Substring(customId.LastIndexOf(" ", StringComparison.Ordinal) + 1);
-            Puts($"{base64}");
             MessageState state = MessageState.Create(base64);
             if (state == null)
             {
                 SendResponse(interaction, TemplateKeys.Errors.UnknownState, GetDefault(interaction));
                 return null;
             }
-            
-            Puts(state.ToString());
-            command = _pluginConfig.CommandMessages.FirstOrDefault(c => c.Command == state.Command);
+
+            command = _commandCache[state.Command];
             if (command == null)
             {
-                SendResponse(interaction, TemplateKeys.Errors.UnknownCommand, GetDefault(interaction).Add(PlaceholderKeys.CommandName, state.Command));
+                SendResponse(interaction, TemplateKeys.Errors.UnknownCommand, GetDefault(interaction).Add(PlaceholderDataKeys.CommandName, state.Command));
                 return null;
             }
             

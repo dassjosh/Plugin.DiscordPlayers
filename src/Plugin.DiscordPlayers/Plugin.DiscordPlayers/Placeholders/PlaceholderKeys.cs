@@ -1,11 +1,15 @@
+using DiscordPlayersPlugin.Plugins;
+using Oxide.Ext.Discord.Libraries.Placeholders;
+
 namespace DiscordPlayersPlugin.Placeholders
 {
-    public static class PlaceholderKeys
+    public class PlaceholderKeys
     {
-        public const string CommandId = "command.id";
-        public const string CommandName = "command.name";
-        public const string PlayerIndex = "player.index";
-        public const string PlayerDuration = "timespan";
-        public const string MaxPage = "page.max";
+        public static readonly PlaceholderKey PlayerIndex = new PlaceholderKey(nameof(DiscordPlayers), "player.index");
+        public static readonly PlaceholderKey Page = new PlaceholderKey(nameof(DiscordPlayers), "state.page");
+        public static readonly PlaceholderKey SortState = new PlaceholderKey(nameof(DiscordPlayers), "state.sort");
+        public static readonly PlaceholderKey CommandId = new PlaceholderKey(nameof(DiscordPlayers), "command.id");
+        public static readonly PlaceholderKey CommandName = new PlaceholderKey(nameof(DiscordPlayers), "command.name");
+        public static readonly PlaceholderKey MaxPage = new PlaceholderKey(nameof(DiscordPlayers), "page.max");
     }
 }

@@ -4,7 +4,6 @@ using DiscordPlayersPlugin.Cache;
 using DiscordPlayersPlugin.Configuration;
 using DiscordPlayersPlugin.Data;
 using DiscordPlayersPlugin.Handlers;
-using DiscordPlayersPlugin.Templates;
 using Oxide.Core.Plugins;
 using Oxide.Ext.Discord.Attributes.ApplicationCommands;
 using Oxide.Ext.Discord.Builders.ApplicationCommands;
@@ -78,7 +77,9 @@ namespace DiscordPlayersPlugin.Plugins
             CommandCreate cmd = builder.Build();
             DiscordCommandLocalization loc = builder.BuildCommandLocalization();
 
-            _localizations.RegisterCommandLocalizationAsync(this, settings.GetTemplateName(), loc, new TemplateVersion(1, 0, 0), new TemplateVersion(1, 0, 0)).Then(() =>
+            _commandCache[command] = settings;
+            
+            _localizations.RegisterCommandLocalizationAsync(this, settings.GetTemplateName(), loc, new TemplateVersion(1, 0, 0), new TemplateVersion(1, 0, 0)).Then(_ =>
             {
                 _localizations.ApplyCommandLocalizationsAsync(this, cmd, settings.GetTemplateName()).Then(() =>
                 {
@@ -109,13 +110,11 @@ namespace DiscordPlayersPlugin.Plugins
                     continue;
                 }
 
+                _commandCache[config.GetTemplateName()] = config;
                 PermanentMessageData existing = _pluginData.GetPermanentMessage(config);
                 if (existing != null)
                 {
-                    channel.GetMessage(Client, existing.MessageId).Then(message =>
-                    {
-                        _permanentState[message.Id] = new PermanentMessageHandler(Client, new MessageCache(config), config.UpdateRate, message);
-                    }).Catch<ResponseError>(error =>
+                    channel.GetMessage(Client, existing.MessageId).Catch<ResponseError>(error =>
                     {
                         if (error.HttpStatusCode == DiscordHttpStatusCode.NotFound)
                         {
@@ -144,7 +143,6 @@ namespace DiscordPlayersPlugin.Plugins
                         MessageId = message.Id
                     });
                     SaveData();
-                    _permanentState[message.Id] = new PermanentMessageHandler(Client, cache, config.UpdateRate, message);
                 });
             });
         }
@@ -154,6 +152,7 @@ namespace DiscordPlayersPlugin.Plugins
             MessageCache cache = GetCache(interaction);
             if (cache == null)
             {
+                Puts("Cache is null!!");
                 return;
             }
             
