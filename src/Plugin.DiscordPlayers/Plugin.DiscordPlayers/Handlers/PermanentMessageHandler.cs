@@ -2,8 +2,7 @@ using System;
 using DiscordPlayersPlugin.Cache;
 using DiscordPlayersPlugin.Plugins;
 using Oxide.Ext.Discord.Clients;
-using Oxide.Ext.Discord.Entities.Api;
-using Oxide.Ext.Discord.Entities.Messages;
+using Oxide.Ext.Discord.Entities;
 using Oxide.Plugins;
 
 namespace DiscordPlayersPlugin.Handlers

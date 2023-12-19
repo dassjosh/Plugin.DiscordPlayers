@@ -2,7 +2,7 @@ using DiscordPlayersPlugin.Configuration;
 using DiscordPlayersPlugin.Data;
 using Oxide.Core;
 using Oxide.Core.Libraries.Covalence;
-using Oxide.Ext.Discord.Entities.Gateway;
+using Oxide.Ext.Discord.Entities;
 using UnityEngine;
 
 namespace DiscordPlayersPlugin.Plugins

@@ -3,24 +3,12 @@ using System.Linq;
 using DiscordPlayersPlugin.Cache;
 using DiscordPlayersPlugin.Configuration;
 using DiscordPlayersPlugin.Data;
-using DiscordPlayersPlugin.Handlers;
 using Oxide.Core.Plugins;
-using Oxide.Ext.Discord.Attributes.ApplicationCommands;
-using Oxide.Ext.Discord.Builders.ApplicationCommands;
+using Oxide.Ext.Discord.Attributes;
+using Oxide.Ext.Discord.Builders;
 using Oxide.Ext.Discord.Constants;
 using Oxide.Ext.Discord.Entities;
-using Oxide.Ext.Discord.Entities.Api;
-using Oxide.Ext.Discord.Entities.Applications;
-using Oxide.Ext.Discord.Entities.Channels;
-using Oxide.Ext.Discord.Entities.Gateway.Events;
-using Oxide.Ext.Discord.Entities.Guilds;
-using Oxide.Ext.Discord.Entities.Interactions;
-using Oxide.Ext.Discord.Entities.Interactions.ApplicationCommands;
-using Oxide.Ext.Discord.Entities.Interactions.Response;
-using Oxide.Ext.Discord.Entities.Messages;
-using Oxide.Ext.Discord.Entities.Permissions;
-using Oxide.Ext.Discord.Libraries.Templates;
-using Oxide.Ext.Discord.Libraries.Templates.Commands;
+using Oxide.Ext.Discord.Libraries;
 
 namespace DiscordPlayersPlugin.Plugins
 {

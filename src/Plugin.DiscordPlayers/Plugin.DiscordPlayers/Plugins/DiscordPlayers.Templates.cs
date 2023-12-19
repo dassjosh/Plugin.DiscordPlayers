@@ -3,13 +3,8 @@ using DiscordPlayersPlugin.Configuration;
 using DiscordPlayersPlugin.Placeholders;
 using DiscordPlayersPlugin.Templates;
 using Oxide.Ext.Discord.Entities;
-using Oxide.Ext.Discord.Entities.Interactions.MessageComponents;
 using Oxide.Ext.Discord.Extensions;
-using Oxide.Ext.Discord.Libraries.Placeholders.Keys;
-using Oxide.Ext.Discord.Libraries.Templates;
-using Oxide.Ext.Discord.Libraries.Templates.Components;
-using Oxide.Ext.Discord.Libraries.Templates.Embeds;
-using Oxide.Ext.Discord.Libraries.Templates.Messages;
+using Oxide.Ext.Discord.Libraries;
 
 namespace DiscordPlayersPlugin.Plugins
 {

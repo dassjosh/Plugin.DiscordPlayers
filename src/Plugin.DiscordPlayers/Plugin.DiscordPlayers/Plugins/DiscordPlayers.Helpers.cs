@@ -5,10 +5,8 @@ using DiscordPlayersPlugin.Placeholders;
 using DiscordPlayersPlugin.State;
 using DiscordPlayersPlugin.Templates;
 using Oxide.Core;
-using Oxide.Ext.Discord.Entities.Interactions;
-using Oxide.Ext.Discord.Entities.Interactions.Response;
-using Oxide.Ext.Discord.Entities.Messages;
-using Oxide.Ext.Discord.Libraries.Placeholders;
+using Oxide.Ext.Discord.Entities;
+using Oxide.Ext.Discord.Libraries;
 
 namespace DiscordPlayersPlugin.Plugins
 {

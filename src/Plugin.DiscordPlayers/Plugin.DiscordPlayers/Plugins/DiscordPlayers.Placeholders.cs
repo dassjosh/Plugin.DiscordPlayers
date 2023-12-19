@@ -5,10 +5,9 @@ using DiscordPlayersPlugin.Lang;
 using DiscordPlayersPlugin.Placeholders;
 using DiscordPlayersPlugin.State;
 using Oxide.Core.Libraries.Covalence;
-using Oxide.Ext.Discord.Entities.Interactions;
-using Oxide.Ext.Discord.Entities.Users;
+using Oxide.Ext.Discord.Entities;
 using Oxide.Ext.Discord.Extensions;
-using Oxide.Ext.Discord.Libraries.Placeholders;
+using Oxide.Ext.Discord.Libraries;
 
 namespace DiscordPlayersPlugin.Plugins
 {
