@@ -14,12 +14,11 @@ namespace DiscordPlayersPlugin.Plugins
     public partial class DiscordPlayers
     {
         public DiscordClient Client { get; set; }
+        public DiscordPluginPool Pool { get; set; }
 
         private PluginConfig _pluginConfig; //Plugin Config
         private PluginData _pluginData;
         
-        [DiscordPool]
-        public DiscordPluginPool Pool;
         private readonly DiscordAppCommand _appCommand = GetLibrary<DiscordAppCommand>();
         private readonly DiscordPlaceholders _placeholders = GetLibrary<DiscordPlaceholders>();
         private readonly DiscordMessageTemplates _templates = GetLibrary<DiscordMessageTemplates>();

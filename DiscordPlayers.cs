@@ -28,7 +28,7 @@ namespace Oxide.Plugins
 {
     [Info("Discord Players", "MJSU", "3.0.0")]
     [Description("Displays online players in discord")]
-    public partial class DiscordPlayers : CovalencePlugin, IDiscordPlugin
+    public partial class DiscordPlayers : CovalencePlugin, IDiscordPlugin, IDiscordPool
     {
         #region Plugins\DiscordPlayers.Config.cs
         protected override void LoadDefaultConfig() { }
@@ -297,12 +297,11 @@ namespace Oxide.Plugins
 
         #region Plugins\DiscordPlayers.Fields.cs
         public DiscordClient Client { get; set; }
+        public DiscordPluginPool Pool { get; set; }
         
         private PluginConfig _pluginConfig; //Plugin Config
         private PluginData _pluginData;
         
-        [DiscordPool]
-        public DiscordPluginPool Pool;
         private readonly DiscordAppCommand _appCommand = GetLibrary<DiscordAppCommand>();
         private readonly DiscordPlaceholders _placeholders = GetLibrary<DiscordPlaceholders>();
         private readonly DiscordMessageTemplates _templates = GetLibrary<DiscordMessageTemplates>();
