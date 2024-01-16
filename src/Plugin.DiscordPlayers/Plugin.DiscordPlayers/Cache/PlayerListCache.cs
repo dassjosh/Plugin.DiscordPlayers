@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Oxide.Core.Libraries.Covalence;
 
@@ -9,11 +8,11 @@ namespace DiscordPlayersPlugin.Cache
         private readonly List<IPlayer> _allList = new List<IPlayer>();
         private readonly List<IPlayer> _nonAdminList = new List<IPlayer>();
 
-        private readonly Func<IPlayer, IPlayer, int> _compareTo;
+        private readonly IComparer<IPlayer> _comparer;
 
-        public PlayerListCache(Func<IPlayer, IPlayer, int> compareTo)
+        public PlayerListCache(IComparer<IPlayer> comparer)
         {
-            _compareTo = compareTo;
+            _comparer = comparer;
         }
 
         public void Add(IPlayer player)
@@ -25,7 +24,7 @@ namespace DiscordPlayersPlugin.Cache
 
         public void Insert(List<IPlayer> list, IPlayer player)
         {
-            int index = IndexOf(list, player);
+            int index = list.BinarySearch(player, _comparer);
             if (index < 0)
             {
                 list.Insert(~index, player);
@@ -45,33 +44,6 @@ namespace DiscordPlayersPlugin.Cache
         public List<IPlayer> GetList(bool includeAdmin)
         {
             return includeAdmin ? _allList : _nonAdminList;
-        }
-        
-        private int IndexOf(List<IPlayer> players, IPlayer player)
-        {
-            int min = 0;
-            int max = players.Count - 1;
-            while (min <= max)
-            {
-                int mid = min + (max - min) / 2;
-                IPlayer midPlayer = players[mid];
-                int compare = _compareTo(player, midPlayer);
-                
-                if (compare < 0)
-                {
-                    max = mid - 1;
-                }
-                else if (compare > 0)
-                {
-                    min = mid + 1;
-                }
-                else
-                {
-                    return mid;
-                }
-            }
-
-            return ~min;
         }
     }
 }

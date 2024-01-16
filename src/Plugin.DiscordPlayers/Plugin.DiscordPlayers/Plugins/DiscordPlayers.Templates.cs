@@ -96,7 +96,7 @@ namespace DiscordPlayersPlugin.Plugins
         {
             return new DiscordEmbedFieldTemplate($"#{PlaceholderKeys.PlayerIndex} {DefaultKeys.Player.NameClan}", 
                 $"**Steam ID:**{DefaultKeys.Player.Id}\n" +
-                $"**Connected:** {DefaultKeys.Timespan.Hours} {DefaultKeys.Timespan.Minutes}m {DefaultKeys.Timespan.Seconds}s\n" +
+                $"**Connected:** {DefaultKeys.Timespan.Hours}h {DefaultKeys.Timespan.Minutes}m {DefaultKeys.Timespan.Seconds}s\n" +
                 $"**Ping:** {DefaultKeys.Player.Ping}ms\n" +
                 $"**Country:** {DefaultKeys.Player.Country}\n" +
                 $"**User:** {DefaultKeys.User.Mention}");

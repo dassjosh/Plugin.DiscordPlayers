@@ -53,7 +53,8 @@ namespace DiscordPlayersPlugin.State
         {
             MemoryStream stream = DiscordPlayers.Instance.Pool.GetMemoryStream();
             Serializer.Serialize(stream, this);
-            string base64 = Convert.ToBase64String(stream.ToArray());
+            stream.TryGetBuffer(out ArraySegment<byte> buffer);
+            string base64 = Convert.ToBase64String(buffer.AsSpan());
             DiscordPlayers.Instance.Pool.FreeMemoryStream(stream);
             return base64;
         }

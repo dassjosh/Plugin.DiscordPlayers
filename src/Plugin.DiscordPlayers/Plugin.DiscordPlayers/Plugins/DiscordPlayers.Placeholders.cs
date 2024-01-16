@@ -17,7 +17,7 @@ namespace DiscordPlayersPlugin.Plugins
         {
             _placeholders.RegisterPlaceholder<int>(this,PlaceholderKeys.PlayerIndex, PlaceholderDataKeys.PlayerIndex);
             _placeholders.RegisterPlaceholder<MessageState, int>(this, PlaceholderKeys.Page, PlaceholderDataKeys.MessageState, GetPage);
-            _placeholders.RegisterPlaceholder<MessageState, string>(this, PlaceholderKeys.SortState, GetSort);
+            _placeholders.RegisterPlaceholder<MessageState, string>(this, PlaceholderKeys.SortState, PlaceholderDataKeys.MessageState, GetSort);
             _placeholders.RegisterPlaceholder<string>(this, PlaceholderKeys.CommandId, PlaceholderDataKeys.CommandId);
             _placeholders.RegisterPlaceholder<string>(this,PlaceholderKeys.CommandName, PlaceholderDataKeys.CommandName);
             _placeholders.RegisterPlaceholder<int>(this, PlaceholderKeys.MaxPage, PlaceholderDataKeys.MaxPage);
