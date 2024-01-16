@@ -1,9 +1,8 @@
 using Oxide.Ext.Discord.Entities;
 
-namespace DiscordPlayersPlugin.Data
+namespace DiscordPlayersPlugin.Data;
+
+public class PermanentMessageData
 {
-    public class PermanentMessageData
-    {
-        public Snowflake MessageId { get; set; }
-    }
+    public Snowflake MessageId { get; set; }
 }

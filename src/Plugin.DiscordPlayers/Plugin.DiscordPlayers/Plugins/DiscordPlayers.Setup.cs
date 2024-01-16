@@ -5,64 +5,63 @@ using Oxide.Core.Libraries.Covalence;
 using Oxide.Ext.Discord.Entities;
 using UnityEngine;
 
-namespace DiscordPlayersPlugin.Plugins
+namespace DiscordPlayersPlugin.Plugins;
+
+public partial class DiscordPlayers
 {
-    public partial class DiscordPlayers
+    private void Init()
     {
-        private void Init()
-        {
-            Instance = this;
-            _discordSettings.ApiToken = _pluginConfig.DiscordApiKey;
-            _discordSettings.LogLevel = _pluginConfig.ExtensionDebugging;
-            _discordSettings.Intents = GatewayIntents.Guilds | GatewayIntents.GuildMembers;
+        Instance = this;
+        _discordSettings.ApiToken = _pluginConfig.DiscordApiKey;
+        _discordSettings.LogLevel = _pluginConfig.ExtensionDebugging;
+        _discordSettings.Intents = GatewayIntents.Guilds | GatewayIntents.GuildMembers;
 
-            _pluginData = Interface.Oxide.DataFileSystem.ReadObject<PluginData>(Name) ?? new PluginData();
+        _pluginData = Interface.Oxide.DataFileSystem.ReadObject<PluginData>(Name) ?? new PluginData();
+    }
+
+    private void OnServerInitialized()
+    {
+        if (string.IsNullOrEmpty(_pluginConfig.DiscordApiKey))
+        {
+            PrintWarning("Please set the Discord Bot Token and reload the plugin");
+            return;
         }
-
-        private void OnServerInitialized()
+            
+        _playerCache.Initialize(players.Connected);
+            
+        RegisterPlaceholders();
+        RegisterTemplates();
+            
+        foreach (CommandSettings message in _pluginConfig.CommandMessages)
         {
-            if (string.IsNullOrEmpty(_pluginConfig.DiscordApiKey))
+            if (message.EmbedFieldLimit > 25)
             {
-                PrintWarning("Please set the Discord Bot Token and reload the plugin");
-                return;
+                PrintWarning($"Players For Embed cannot be greater than 25 for command {message.Command}");
             }
-            
-            _playerCache.Initialize(players.Connected);
-            
-            RegisterPlaceholders();
-            RegisterTemplates();
-            
-            foreach (CommandSettings message in _pluginConfig.CommandMessages)
+            else if (message.EmbedFieldLimit < 0)
             {
-                if (message.EmbedFieldLimit > 25)
-                {
-                    PrintWarning($"Players For Embed cannot be greater than 25 for command {message.Command}");
-                }
-                else if (message.EmbedFieldLimit < 0)
-                {
-                    PrintWarning($"Players For Embed cannot be less than 0 for command {message.Command}");
-                }
-
-                message.EmbedFieldLimit = Mathf.Clamp(message.EmbedFieldLimit, 0, 25);
+                PrintWarning($"Players For Embed cannot be less than 0 for command {message.Command}");
             }
 
-            Client.Connect(_discordSettings);
+            message.EmbedFieldLimit = Mathf.Clamp(message.EmbedFieldLimit, 0, 25);
         }
 
-        private void OnUserConnected(IPlayer player)
-        {
-            _playerCache.OnUserConnected(player);
-        }
+        Client.Connect(_discordSettings);
+    }
 
-        private void OnUserDisconnected(IPlayer player)
-        {
-            _playerCache.OnUserDisconnected(player);
-        }
+    private void OnUserConnected(IPlayer player)
+    {
+        _playerCache.OnUserConnected(player);
+    }
 
-        private void Unload()
-        {
-            SaveData();
-            Instance = null;
-        }
+    private void OnUserDisconnected(IPlayer player)
+    {
+        _playerCache.OnUserDisconnected(player);
+    }
+
+    private void Unload()
+    {
+        SaveData();
+        Instance = null;
     }
 }

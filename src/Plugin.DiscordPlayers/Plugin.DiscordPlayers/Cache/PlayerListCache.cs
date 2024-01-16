@@ -1,49 +1,48 @@
 using System.Collections.Generic;
 using Oxide.Core.Libraries.Covalence;
 
-namespace DiscordPlayersPlugin.Cache
+namespace DiscordPlayersPlugin.Cache;
+
+public class PlayerListCache
 {
-    public class PlayerListCache
+    private readonly List<IPlayer> _allList = new();
+    private readonly List<IPlayer> _nonAdminList = new();
+
+    private readonly IComparer<IPlayer> _comparer;
+
+    public PlayerListCache(IComparer<IPlayer> comparer)
     {
-        private readonly List<IPlayer> _allList = new List<IPlayer>();
-        private readonly List<IPlayer> _nonAdminList = new List<IPlayer>();
+        _comparer = comparer;
+    }
 
-        private readonly IComparer<IPlayer> _comparer;
+    public void Add(IPlayer player)
+    {
+        Remove(player);
+        Insert(_allList, player);
+        Insert(_nonAdminList, player);
+    }
 
-        public PlayerListCache(IComparer<IPlayer> comparer)
+    public void Insert(List<IPlayer> list, IPlayer player)
+    {
+        int index = list.BinarySearch(player, _comparer);
+        if (index < 0)
         {
-            _comparer = comparer;
+            list.Insert(~index, player);
         }
-
-        public void Add(IPlayer player)
+        else
         {
-            Remove(player);
-            Insert(_allList, player);
-            Insert(_nonAdminList, player);
+            list[index] = player;
         }
+    }
 
-        public void Insert(List<IPlayer> list, IPlayer player)
-        {
-            int index = list.BinarySearch(player, _comparer);
-            if (index < 0)
-            {
-                list.Insert(~index, player);
-            }
-            else
-            {
-                list[index] = player;
-            }
-        }
+    public void Remove(IPlayer player)
+    {
+        _allList.Remove(player);
+        _nonAdminList.Remove(player);
+    }
 
-        public void Remove(IPlayer player)
-        {
-            _allList.Remove(player);
-            _nonAdminList.Remove(player);
-        }
-
-        public List<IPlayer> GetList(bool includeAdmin)
-        {
-            return includeAdmin ? _allList : _nonAdminList;
-        }
+    public List<IPlayer> GetList(bool includeAdmin)
+    {
+        return includeAdmin ? _allList : _nonAdminList;
     }
 }

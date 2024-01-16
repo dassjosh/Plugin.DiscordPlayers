@@ -5,45 +5,44 @@ using Oxide.Ext.Discord.Clients;
 using Oxide.Ext.Discord.Entities;
 using Oxide.Plugins;
 
-namespace DiscordPlayersPlugin.Handlers
+namespace DiscordPlayersPlugin.Handlers;
+
+public class PermanentMessageHandler
 {
-    public class PermanentMessageHandler
+    private readonly DiscordClient _client;
+    private readonly MessageCache _cache;
+    private readonly DiscordMessage _message;
+    private readonly MessageUpdate _update = new();
+    private readonly Timer _timer;
+    private DateTime _lastUpdate;
+
+    public PermanentMessageHandler(DiscordClient client, MessageCache cache, float updateRate, DiscordMessage message)
     {
-        private readonly DiscordClient _client;
-        private readonly MessageCache _cache;
-        private readonly DiscordMessage _message;
-        private readonly MessageUpdate _update = new MessageUpdate();
-        private readonly Timer _timer;
-        private DateTime _lastUpdate;
+        _client = client;
+        _cache = cache;
+        _message = message;
+        _timer = DiscordPlayers.Instance.Timer.Every(updateRate * 60f, SendUpdate);
+        SendUpdate();
+    }
 
-        public PermanentMessageHandler(DiscordClient client, MessageCache cache, float updateRate, DiscordMessage message)
+    private void SendUpdate()
+    {
+        if (_lastUpdate + TimeSpan.FromSeconds(5) > DateTime.UtcNow)
         {
-            _client = client;
-            _cache = cache;
-            _message = message;
-            _timer = DiscordPlayers.Instance.Timer.Every(updateRate * 60f, SendUpdate);
-            SendUpdate();
+            return;
         }
-
-        private void SendUpdate()
+            
+        _lastUpdate = DateTime.UtcNow;
+            
+        DiscordPlayers.Instance.CreateMessage(_cache, null, _update, message =>
         {
-            if (_lastUpdate + TimeSpan.FromSeconds(5) > DateTime.UtcNow)
+            _message.Edit(_client, message).Catch<ResponseError>(error =>
             {
-                return;
-            }
-            
-            _lastUpdate = DateTime.UtcNow;
-            
-            DiscordPlayers.Instance.CreateMessage(_cache, null, _update, message =>
-            {
-                _message.Edit(_client, message).Catch<ResponseError>(error =>
+                if (error.HttpStatusCode == DiscordHttpStatusCode.NotFound)
                 {
-                    if (error.HttpStatusCode == DiscordHttpStatusCode.NotFound)
-                    {
-                        _timer?.Destroy();
-                    }
-                });
+                    _timer?.Destroy();
+                }
             });
-        }
+        });
     }
 }

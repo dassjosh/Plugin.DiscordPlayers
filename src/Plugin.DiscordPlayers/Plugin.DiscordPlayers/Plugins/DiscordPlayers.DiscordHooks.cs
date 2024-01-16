@@ -10,211 +10,210 @@ using Oxide.Ext.Discord.Constants;
 using Oxide.Ext.Discord.Entities;
 using Oxide.Ext.Discord.Libraries;
 
-namespace DiscordPlayersPlugin.Plugins
-{
-    public partial class DiscordPlayers
-    {
-        [HookMethod(DiscordExtHooks.OnDiscordGatewayReady)]
-        private void OnDiscordGatewayReady(GatewayReadyEvent ready)
-        {
-            DiscordApplication app = Client.Bot.Application;
-            
-            foreach (CommandSettings command in _pluginConfig.CommandMessages)
-            {
-                CreateApplicationCommand(command);
-            }
+namespace DiscordPlayersPlugin.Plugins;
 
-            foreach (KeyValuePair<string, Snowflake> command in _pluginData.RegisteredCommands.ToList())
+public partial class DiscordPlayers
+{
+    [HookMethod(DiscordExtHooks.OnDiscordGatewayReady)]
+    private void OnDiscordGatewayReady(GatewayReadyEvent ready)
+    {
+        DiscordApplication app = Client.Bot.Application;
+            
+        foreach (CommandSettings command in _pluginConfig.CommandMessages)
+        {
+            CreateApplicationCommand(command);
+        }
+
+        foreach (KeyValuePair<string, Snowflake> command in _pluginData.RegisteredCommands.ToList())
+        {
+            if (_pluginConfig.CommandMessages.All(c => c.Command != command.Key))
             {
-                if (_pluginConfig.CommandMessages.All(c => c.Command != command.Key))
+                if (command.Value.IsValid())
                 {
-                    if (command.Value.IsValid())
+                    app.GetGlobalCommand(Client, command.Value).Then(oldCommand => oldCommand.Delete(Client).Then(() =>
                     {
-                        app.GetGlobalCommand(Client, command.Value).Then(oldCommand => oldCommand.Delete(Client).Then(() =>
+                        _pluginData.RegisteredCommands.Remove(command);
+                        SaveData();
+                    }).Catch<ResponseError>(error =>
+                    {
+                        if (error.DiscordError?.Code == 10063)
                         {
                             _pluginData.RegisteredCommands.Remove(command);
                             SaveData();
-                        }).Catch<ResponseError>(error =>
-                        {
-                            if (error.DiscordError?.Code == 10063)
-                            {
-                                _pluginData.RegisteredCommands.Remove(command);
-                                SaveData();
-                                error.SuppressErrorMessage();
-                            }
-                        }));
-                    }
-                }
-            }
-
-            Puts($"{Title} Ready");
-        }
-
-        public void CreateApplicationCommand(CommandSettings settings)
-        {
-            string command = settings.Command;
-            if (string.IsNullOrEmpty(command))
-            {
-                return;
-            }
-            
-            ApplicationCommandBuilder builder = new ApplicationCommandBuilder(command, "Shows players currently on the server", ApplicationCommandType.ChatInput);
-            builder.AllowInDirectMessages(settings.AllowInDm);
-            builder.AddDefaultPermissions(PermissionFlags.None);
-
-            CommandCreate cmd = builder.Build();
-            DiscordCommandLocalization loc = builder.BuildCommandLocalization();
-
-            _commandCache[command] = settings;
-            
-            _localizations.RegisterCommandLocalizationAsync(this, settings.GetTemplateName(), loc, new TemplateVersion(1, 0, 0), new TemplateVersion(1, 0, 0)).Then(_ =>
-            {
-                _localizations.ApplyCommandLocalizationsAsync(this, cmd, settings.GetTemplateName()).Then(() =>
-                {
-                    Client.Bot.Application.CreateGlobalCommand(Client, builder.Build()).Then(appCommand =>
-                    {
-                        _pluginData.RegisteredCommands[command] = appCommand.Id;
-                        SaveData();
-                    });
-                });
-            });
-            
-            _appCommand.AddApplicationCommand(this, Client.Bot.Application.Id, HandleApplicationCommand, command);
-        }
-
-        [HookMethod(DiscordExtHooks.OnDiscordGuildCreated)]
-        private void OnDiscordGuildCreated(DiscordGuild created)
-        {
-            foreach (PermanentMessageSettings config in _pluginConfig.Permanent)
-            {
-                if (!config.Enabled || !config.ChannelId.IsValid())
-                {
-                    continue;
-                }
-
-                DiscordChannel channel = created.GetChannel(config.ChannelId);
-                if (channel == null)
-                {
-                    continue;
-                }
-
-                _commandCache[config.GetTemplateName()] = config;
-                PermanentMessageData existing = _pluginData.GetPermanentMessage(config);
-                if (existing != null)
-                {
-                    channel.GetMessage(Client, existing.MessageId).Catch<ResponseError>(error =>
-                    {
-                        if (error.HttpStatusCode == DiscordHttpStatusCode.NotFound)
-                        {
-                            CreatePermanentMessage(config, channel);
                             error.SuppressErrorMessage();
                         }
-                    });
-                }
-                else
-                {
-                    CreatePermanentMessage(config, channel);
+                    }));
                 }
             }
         }
 
-        private void CreatePermanentMessage(PermanentMessageSettings config, DiscordChannel channel)
-        {
-            MessageCache cache = new MessageCache(config);
+        Puts($"{Title} Ready");
+    }
 
-            CreateMessage<MessageCreate>(cache, null, null, create =>
+    public void CreateApplicationCommand(CommandSettings settings)
+    {
+        string command = settings.Command;
+        if (string.IsNullOrEmpty(command))
+        {
+            return;
+        }
+            
+        ApplicationCommandBuilder builder = new(command, "Shows players currently on the server", ApplicationCommandType.ChatInput);
+        builder.AllowInDirectMessages(settings.AllowInDm);
+        builder.AddDefaultPermissions(PermissionFlags.None);
+
+        CommandCreate cmd = builder.Build();
+        DiscordCommandLocalization loc = builder.BuildCommandLocalization();
+
+        _commandCache[command] = settings;
+            
+        _localizations.RegisterCommandLocalizationAsync(this, settings.GetTemplateName(), loc, new TemplateVersion(1, 0, 0), new TemplateVersion(1, 0, 0)).Then(_ =>
+        {
+            _localizations.ApplyCommandLocalizationsAsync(this, cmd, settings.GetTemplateName()).Then(() =>
             {
-                channel.CreateMessage(Client, create).Then(message =>
+                Client.Bot.Application.CreateGlobalCommand(Client, builder.Build()).Then(appCommand =>
                 {
-                    _pluginData.SetPermanentMessage(config, new PermanentMessageData
-                    {
-                        MessageId = message.Id
-                    });
+                    _pluginData.RegisteredCommands[command] = appCommand.Id;
                     SaveData();
                 });
             });
-        }
-        
-        private void HandleApplicationCommand(DiscordInteraction interaction, InteractionDataParsed parsed)
-        {
-            MessageCache cache = GetCache(interaction);
-            if (cache == null)
-            {
-                Puts("Cache is null!!");
-                return;
-            }
+        });
             
-            CreateMessage<InteractionCallbackData>(cache, interaction, null, create =>
-            {
-                interaction.CreateResponse(Client, new InteractionResponse
-                {
-                    Type = InteractionResponseType.ChannelMessageWithSource,
-                    Data = create
-                });
-            });
-        }
+        _appCommand.AddApplicationCommand(this, Client.Bot.Application.Id, HandleApplicationCommand, command);
+    }
 
-        [DiscordMessageComponentCommand(BackCommand)]
-        private void HandleBackCommand(DiscordInteraction interaction)
+    [HookMethod(DiscordExtHooks.OnDiscordGuildCreated)]
+    private void OnDiscordGuildCreated(DiscordGuild created)
+    {
+        foreach (PermanentMessageSettings config in _pluginConfig.Permanent)
         {
-            MessageCache cache = GetCache(interaction);
-            if (cache == null)
+            if (!config.Enabled || !config.ChannelId.IsValid())
             {
-                return;
+                continue;
             }
-            
-            cache.State.PreviousPage();
-            HandleUpdate(interaction, cache);
-        }
-        
-        [DiscordMessageComponentCommand(RefreshCommand)]
-        private void HandleRefreshCommand(DiscordInteraction interaction)
-        {
-            MessageCache cache = GetCache(interaction);
-            if (cache == null)
-            {
-                return;
-            }
-            
-            HandleUpdate(interaction, cache);
-        }
-        
-        [DiscordMessageComponentCommand(ForwardCommand)]
-        private void HandleForwardCommand(DiscordInteraction interaction)
-        {
-            MessageCache cache = GetCache(interaction);
-            if (cache == null)
-            {
-                return;
-            }
-            
-            cache.State.NextPage();
-            HandleUpdate(interaction, cache);
-        }
-        
-        [DiscordMessageComponentCommand(ChangeSort)]
-        private void HandleChangeSortCommand(DiscordInteraction interaction)
-        {
-            MessageCache cache = GetCache(interaction);
-            if (cache == null)
-            {
-                return;
-            }
-            
-            cache.State.NextSort();
-            HandleUpdate(interaction, cache);
-        }
 
-        private void HandleUpdate(DiscordInteraction interaction, MessageCache cache)
-        {
-            CreateMessage<InteractionCallbackData>(cache, interaction, null, create =>
+            DiscordChannel channel = created.GetChannel(config.ChannelId);
+            if (channel == null)
             {
-                interaction.CreateResponse(Client, new InteractionResponse
+                continue;
+            }
+
+            _commandCache[config.GetTemplateName()] = config;
+            PermanentMessageData existing = _pluginData.GetPermanentMessage(config);
+            if (existing != null)
+            {
+                channel.GetMessage(Client, existing.MessageId).Catch<ResponseError>(error =>
                 {
-                    Type = InteractionResponseType.UpdateMessage,
-                    Data = create
+                    if (error.HttpStatusCode == DiscordHttpStatusCode.NotFound)
+                    {
+                        CreatePermanentMessage(config, channel);
+                        error.SuppressErrorMessage();
+                    }
                 });
-            });
+            }
+            else
+            {
+                CreatePermanentMessage(config, channel);
+            }
         }
+    }
+
+    private void CreatePermanentMessage(PermanentMessageSettings config, DiscordChannel channel)
+    {
+        MessageCache cache = new(config);
+
+        CreateMessage<MessageCreate>(cache, null, null, create =>
+        {
+            channel.CreateMessage(Client, create).Then(message =>
+            {
+                _pluginData.SetPermanentMessage(config, new PermanentMessageData
+                {
+                    MessageId = message.Id
+                });
+                SaveData();
+            });
+        });
+    }
+        
+    private void HandleApplicationCommand(DiscordInteraction interaction, InteractionDataParsed parsed)
+    {
+        MessageCache cache = GetCache(interaction);
+        if (cache == null)
+        {
+            Puts("Cache is null!!");
+            return;
+        }
+            
+        CreateMessage<InteractionCallbackData>(cache, interaction, null, create =>
+        {
+            interaction.CreateResponse(Client, new InteractionResponse
+            {
+                Type = InteractionResponseType.ChannelMessageWithSource,
+                Data = create
+            });
+        });
+    }
+
+    [DiscordMessageComponentCommand(BackCommand)]
+    private void HandleBackCommand(DiscordInteraction interaction)
+    {
+        MessageCache cache = GetCache(interaction);
+        if (cache == null)
+        {
+            return;
+        }
+            
+        cache.State.PreviousPage();
+        HandleUpdate(interaction, cache);
+    }
+        
+    [DiscordMessageComponentCommand(RefreshCommand)]
+    private void HandleRefreshCommand(DiscordInteraction interaction)
+    {
+        MessageCache cache = GetCache(interaction);
+        if (cache == null)
+        {
+            return;
+        }
+            
+        HandleUpdate(interaction, cache);
+    }
+        
+    [DiscordMessageComponentCommand(ForwardCommand)]
+    private void HandleForwardCommand(DiscordInteraction interaction)
+    {
+        MessageCache cache = GetCache(interaction);
+        if (cache == null)
+        {
+            return;
+        }
+            
+        cache.State.NextPage();
+        HandleUpdate(interaction, cache);
+    }
+        
+    [DiscordMessageComponentCommand(ChangeSort)]
+    private void HandleChangeSortCommand(DiscordInteraction interaction)
+    {
+        MessageCache cache = GetCache(interaction);
+        if (cache == null)
+        {
+            return;
+        }
+            
+        cache.State.NextSort();
+        HandleUpdate(interaction, cache);
+    }
+
+    private void HandleUpdate(DiscordInteraction interaction, MessageCache cache)
+    {
+        CreateMessage<InteractionCallbackData>(cache, interaction, null, create =>
+        {
+            interaction.CreateResponse(Client, new InteractionResponse
+            {
+                Type = InteractionResponseType.UpdateMessage,
+                Data = create
+            });
+        });
     }
 }

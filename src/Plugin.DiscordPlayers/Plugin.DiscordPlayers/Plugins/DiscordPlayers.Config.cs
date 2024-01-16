@@ -3,66 +3,65 @@ using DiscordPlayersPlugin.Configuration;
 using Newtonsoft.Json;
 using Oxide.Ext.Discord.Entities;
 
-namespace DiscordPlayersPlugin.Plugins
+namespace DiscordPlayersPlugin.Plugins;
+
+public partial class DiscordPlayers
 {
-    public partial class DiscordPlayers
+    protected override void LoadDefaultConfig() { }
+
+    protected override void LoadConfig()
     {
-        protected override void LoadDefaultConfig() { }
+        base.LoadConfig();
+        Config.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
+        _pluginConfig = AdditionalConfig(Config.ReadObject<PluginConfig>());
+        Config.WriteObject(_pluginConfig);
+    }
 
-        protected override void LoadConfig()
+    private PluginConfig AdditionalConfig(PluginConfig config)
+    {
+        config.CommandMessages ??= new List<CommandSettings>();
+        if (config.CommandMessages.Count == 0)
         {
-            base.LoadConfig();
-            Config.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
-            _pluginConfig = AdditionalConfig(Config.ReadObject<PluginConfig>());
-            Config.WriteObject(_pluginConfig);
-        }
-
-        private PluginConfig AdditionalConfig(PluginConfig config)
-        {
-            config.CommandMessages = config.CommandMessages ?? new List<CommandSettings>();
-            if (config.CommandMessages.Count == 0)
+            config.CommandMessages.Add(new CommandSettings
             {
-                config.CommandMessages.Add(new CommandSettings
-                {
-                    Command = "players",
-                    ShowAdmins = true,
-                    AllowInDm = true,
-                    EmbedFieldLimit = 25
-                });
+                Command = "players",
+                ShowAdmins = true,
+                AllowInDm = true,
+                EmbedFieldLimit = 25
+            });
 
-                config.CommandMessages.Add(new CommandSettings
-                {
-                    Command = "playersadmin",
-                    ShowAdmins = true,
-                    AllowInDm = true,
-                    EmbedFieldLimit = 25
-                });
-            }
+            config.CommandMessages.Add(new CommandSettings
+            {
+                Command = "playersadmin",
+                ShowAdmins = true,
+                AllowInDm = true,
+                EmbedFieldLimit = 25
+            });
+        }
             
-            config.Permanent = config.Permanent ?? new List<PermanentMessageSettings>
+        config.Permanent ??= new List<PermanentMessageSettings>
+        {
+            new()
             {
-                new PermanentMessageSettings
-                {
-                    Enabled = false, 
-                    ChannelId = new Snowflake(0), 
-                    UpdateRate = 1f,
-                    EmbedFieldLimit = 25
-                }
-            };
-
-            for (int index = 0; index < config.CommandMessages.Count; index++)
-            {
-                CommandSettings settings = new CommandSettings(config.CommandMessages[index]);
-                config.CommandMessages[index] = settings;
+                Enabled = false, 
+                ChannelId = new Snowflake(0), 
+                UpdateRate = 1f,
+                EmbedFieldLimit = 25
             }
+        };
 
-            for (int index = 0; index < config.Permanent.Count; index++)
-            {
-                PermanentMessageSettings settings = new PermanentMessageSettings(config.Permanent[index]);
-                config.Permanent[index] = settings;
-            }
-
-            return config;
+        for (int index = 0; index < config.CommandMessages.Count; index++)
+        {
+            CommandSettings settings = new(config.CommandMessages[index]);
+            config.CommandMessages[index] = settings;
         }
+
+        for (int index = 0; index < config.Permanent.Count; index++)
+        {
+            PermanentMessageSettings settings = new(config.Permanent[index]);
+            config.Permanent[index] = settings;
+        }
+
+        return config;
     }
 }

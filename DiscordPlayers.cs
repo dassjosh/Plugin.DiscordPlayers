@@ -23,7 +23,7 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 
-//DiscordPlayers created with PluginMerge v(1.0.5.0) by MJSU @ https://github.com/dassjosh/Plugin.Merge
+//DiscordPlayers created with PluginMerge v(1.0.7.0) by MJSU @ https://github.com/dassjosh/Plugin.Merge
 namespace Oxide.Plugins
 {
     [Info("Discord Players", "MJSU", "3.0.0")]
@@ -717,7 +717,7 @@ namespace Oxide.Plugins
         {
             return new DiscordEmbedFieldTemplate($"#{PlaceholderKeys.PlayerIndex} {DefaultKeys.Player.NameClan}",
             $"**Steam ID:**{DefaultKeys.Player.Id}\n" +
-            $"**Connected:** {DefaultKeys.Timespan.Hours} {DefaultKeys.Timespan.Minutes}m {DefaultKeys.Timespan.Seconds}s\n" +
+            $"**Connected:** {DefaultKeys.Timespan.Hours}h {DefaultKeys.Timespan.Minutes}m {DefaultKeys.Timespan.Seconds}s\n" +
             $"**Ping:** {DefaultKeys.Player.Ping}ms\n" +
             $"**Country:** {DefaultKeys.Player.Country}\n" +
             $"**User:** {DefaultKeys.User.Mention}");
@@ -806,354 +806,362 @@ namespace Oxide.Plugins
                 _byOnlineTime.Remove(player);
             }
             
-            class NameComparer : Comparer<IPlayer>
+            class NameComparer : IComparer<IPlayer>
             {
-                public override int Compare(IPlayer x, IPlayer y)
+                public int Compare(IPlayer x, IPlayer y)
                 {
                     return string.Compare(x?.Name, y?.Name, StringComparison.Ordinal);
                 }
             }
             
-            class OnlineSinceComparer(Hash<string, DateTime> onlineSince) : Comparer<IPlayer>
+            class OnlineSinceComparer : IComparer<IPlayer>
             {
-                public override int Compare(IPlayer x, IPlayer y)
+                private readonly Hash<string, DateTime> _onlineSince;
+                
+                public OnlineSinceComparer(Hash<string, DateTime> onlineSince)
                 {
-                    return onlineSince[x.Id].CompareTo(onlineSince[y.Id]);
+                    _onlineSince = onlineSince;
+                }
+                
+                public int Compare(IPlayer x, IPlayer y)
+                {
+                    return _onlineSince[x.Id].CompareTo(_onlineSince[y.Id]);
                 }
             }
-            #endregion
-
-            #region Cache\PlayerListCache.cs
-            public class PlayerListCache
-            {
-                private readonly List<IPlayer> _allList = new List<IPlayer>();
-                private readonly List<IPlayer> _nonAdminList = new List<IPlayer>();
-                
-                private readonly IComparer<IPlayer> _comparer;
-                
-                public PlayerListCache(IComparer<IPlayer> comparer)
-                {
-                    _comparer = comparer;
-                }
-                
-                public void Add(IPlayer player)
-                {
-                    Remove(player);
-                    Insert(_allList, player);
-                    Insert(_nonAdminList, player);
-                }
-                
-                public void Insert(List<IPlayer> list, IPlayer player)
-                {
-                    int index = list.BinarySearch(player, _comparer);
-                    if (index < 0)
-                    {
-                        list.Insert(~index, player);
-                    }
-                    else
-                    {
-                        list[index] = player;
-                    }
-                }
-                
-                public void Remove(IPlayer player)
-                {
-                    _allList.Remove(player);
-                    _nonAdminList.Remove(player);
-                }
-                
-                public List<IPlayer> GetList(bool includeAdmin)
-                {
-                    return includeAdmin ? _allList : _nonAdminList;
-                }
-            }
-            #endregion
-
-            #region Configuration\BaseMessageSettings.cs
-            public abstract class BaseMessageSettings
-            {
-                [JsonProperty(PropertyName = "Display Admins In The Player List", Order = 1001)]
-                public bool ShowAdmins { get; set; }
-                
-                [DefaultValue(25)]
-                [JsonProperty(PropertyName = "Players Per Embed (0 - 25)", Order = 1002)]
-                public int EmbedFieldLimit { get; set; }
-                
-                public abstract bool IsPermanent();
-                public abstract string GetTemplateName();
-                
-                [JsonConstructor]
-                public BaseMessageSettings() { }
-                
-                public BaseMessageSettings(BaseMessageSettings settings)
-                {
-                    ShowAdmins = settings?.ShowAdmins ?? true;
-                    EmbedFieldLimit = settings?.EmbedFieldLimit ?? 25;
-                }
-            }
-            #endregion
-
-            #region Configuration\CommandSettings.cs
-            public class CommandSettings : BaseMessageSettings
-            {
-                [JsonProperty(PropertyName = "Command Name (Must Be Unique)")]
-                public string Command { get; set; }
-                
-                [JsonProperty(PropertyName = "Allow Command In Direct Messages")]
-                public bool AllowInDm { get; set; }
-                
-                [JsonConstructor]
-                public CommandSettings() { }
-                
-                public CommandSettings(CommandSettings settings) : base(settings)
-                {
-                    Command = settings?.Command ?? "players";
-                    AllowInDm = settings?.AllowInDm ?? true;
-                }
-                
-                public override bool IsPermanent() => false;
-                public override string GetTemplateName() => Command;
-            }
-            #endregion
-
-            #region Configuration\PermanentMessageSettings.cs
-            public class PermanentMessageSettings : BaseMessageSettings
-            {
-                [JsonProperty(PropertyName = "Enabled")]
-                public bool Enabled { get; set; }
-                
-                [JsonProperty(PropertyName = "Template Name (Must Be Unique)")]
-                public string TemplateName { get; set; }
-                
-                [JsonProperty(PropertyName = "Permanent Message Channel ID")]
-                public Snowflake ChannelId { get; set; }
-                
-                [JsonProperty(PropertyName = "Update Rate (Minutes)")]
-                public float UpdateRate { get; set; }
-                
-                [JsonConstructor]
-                public PermanentMessageSettings() { }
-                
-                public PermanentMessageSettings(PermanentMessageSettings settings) : base(settings)
-                {
-                    Enabled = settings?.Enabled ?? false;
-                    TemplateName = settings?.TemplateName ?? "Permanent";
-                    ChannelId = settings?.ChannelId ?? default(Snowflake);
-                    UpdateRate = settings?.UpdateRate ?? 1f;
-                }
-                
-                public override bool IsPermanent() => true;
-                public override string GetTemplateName() => TemplateName;
-            }
-            #endregion
-
-            #region Configuration\PluginConfig.cs
-            public class PluginConfig
-            {
-                [DefaultValue("")]
-                [JsonProperty(PropertyName = "Discord Bot Token")]
-                public string DiscordApiKey { get; set; }
-                
-                [JsonProperty(PropertyName = "Command Messages")]
-                public List<CommandSettings> CommandMessages { get; set; }
-                
-                [JsonProperty(PropertyName = "Permanent Messages")]
-                public List<PermanentMessageSettings> Permanent { get; set; }
-                
-                [JsonConverter(typeof(StringEnumConverter))]
-                [DefaultValue(DiscordLogLevel.Info)]
-                [JsonProperty(PropertyName = "Discord Extension Log Level (Verbose, Debug, Info, Warning, Error, Exception, Off)")]
-                public DiscordLogLevel ExtensionDebugging { get; set; }
-            }
-            #endregion
-
-            #region Data\PermanentMessageData.cs
-            public class PermanentMessageData
-            {
-                public Snowflake MessageId { get; set; }
-            }
-            #endregion
-
-            #region Data\PluginData.cs
-            public class PluginData
-            {
-                public Hash<string, PermanentMessageData> PermanentMessageIds = new Hash<string, PermanentMessageData>();
-                public Hash<string, Snowflake> RegisteredCommands = new Hash<string, Snowflake>();
-                
-                public PermanentMessageData GetPermanentMessage(PermanentMessageSettings config)
-                {
-                    return PermanentMessageIds[config.TemplateName];
-                }
-                
-                public void SetPermanentMessage(PermanentMessageSettings config, PermanentMessageData data)
-                {
-                    PermanentMessageIds[config.TemplateName] = data;
-                }
-            }
-            #endregion
-
-            #region Enums\SortBy.cs
-            public enum SortBy : byte
-            {
-                Name,
-                Time
-            }
-            #endregion
-
-            #region Handlers\PermanentMessageHandler.cs
-            public class PermanentMessageHandler
-            {
-                private readonly DiscordClient _client;
-                private readonly MessageCache _cache;
-                private readonly DiscordMessage _message;
-                private readonly MessageUpdate _update = new MessageUpdate();
-                private readonly Timer _timer;
-                private DateTime _lastUpdate;
-                
-                public PermanentMessageHandler(DiscordClient client, MessageCache cache, float updateRate, DiscordMessage message)
-                {
-                    _client = client;
-                    _cache = cache;
-                    _message = message;
-                    _timer = DiscordPlayers.Instance.Timer.Every(updateRate * 60f, SendUpdate);
-                    SendUpdate();
-                }
-                
-                private void SendUpdate()
-                {
-                    if (_lastUpdate + TimeSpan.FromSeconds(5) > DateTime.UtcNow)
-                    {
-                        return;
-                    }
-                    
-                    _lastUpdate = DateTime.UtcNow;
-                    
-                    DiscordPlayers.Instance.CreateMessage(_cache, null, _update, message =>
-                    {
-                        _message.Edit(_client, message).Catch<ResponseError>(error =>
-                        {
-                            if (error.HttpStatusCode == DiscordHttpStatusCode.NotFound)
-                            {
-                                _timer?.Destroy();
-                            }
-                        });
-                    });
-                }
-            }
-            #endregion
-
-            #region Lang\LangKeys.cs
-            public static class LangKeys
-            {
-                public const string SortByEnumName = nameof(SortByEnumName);
-                public const string SortByEnumTime = nameof(SortByEnumTime);
-            }
-            #endregion
-
-            #region Placeholders\PlaceholderDataKeys.cs
-            public static class PlaceholderDataKeys
-            {
-                public static readonly PlaceholderDataKey CommandId = new PlaceholderDataKey("command.id");
-                public static readonly PlaceholderDataKey CommandName = new PlaceholderDataKey("command.name");
-                public static readonly PlaceholderDataKey PlayerIndex = new PlaceholderDataKey("player.index");
-                public static readonly PlaceholderDataKey PlayerDuration = new PlaceholderDataKey("timespan");
-                public static readonly PlaceholderDataKey MaxPage = new PlaceholderDataKey("page.max");
-                public static readonly PlaceholderDataKey MessageState = new PlaceholderDataKey("message.state");
-            }
-            #endregion
-
-            #region Placeholders\PlaceholderKeys.cs
-            public class PlaceholderKeys
-            {
-                public static readonly PlaceholderKey PlayerIndex = new PlaceholderKey(nameof(DiscordPlayers), "player.index");
-                public static readonly PlaceholderKey Page = new PlaceholderKey(nameof(DiscordPlayers), "state.page");
-                public static readonly PlaceholderKey SortState = new PlaceholderKey(nameof(DiscordPlayers), "state.sort");
-                public static readonly PlaceholderKey CommandId = new PlaceholderKey(nameof(DiscordPlayers), "command.id");
-                public static readonly PlaceholderKey CommandName = new PlaceholderKey(nameof(DiscordPlayers), "command.name");
-                public static readonly PlaceholderKey MaxPage = new PlaceholderKey(nameof(DiscordPlayers), "page.max");
-            }
-            #endregion
-
-            #region State\MessageState.cs
-            [ProtoContract]
-            public class MessageState
-            {
-                [ProtoMember(1)]
-                public short Page;
-                
-                [ProtoMember(2)]
-                public SortBy Sort;
-                
-                [ProtoMember(3)]
-                public string Command;
-                
-                private MessageState() { }
-                
-                public static MessageState CreateNew(string command)
-                {
-                    return new MessageState
-                    {
-                        Command = command
-                    };
-                }
-                
-                public static MessageState Create(string base64)
-                {
-                    try
-                    {
-                        byte[] data = Convert.FromBase64String(base64);
-                        MemoryStream stream = DiscordPlayers.Instance.Pool.GetMemoryStream();
-                        stream.Write(data, 0, data.Length);
-                        stream.Position = 0;
-                        MessageState state = Serializer.Deserialize<MessageState>(stream);
-                        DiscordPlayers.Instance.Pool.FreeMemoryStream(stream);
-                        return state;
-                    }
-                    catch (Exception ex)
-                    {
-                        DiscordPlayers.Instance.PrintError($"An error occured parsing state. State: {base64}. Exception:\n{ex}");
-                        return null;
-                    }
-                }
-                
-                public string CreateBase64String()
-                {
-                    MemoryStream stream = DiscordPlayers.Instance.Pool.GetMemoryStream();
-                    Serializer.Serialize(stream, this);
-                    stream.TryGetBuffer(out ArraySegment<byte> buffer);
-                    string base64 = Convert.ToBase64String(buffer.AsSpan());
-                    DiscordPlayers.Instance.Pool.FreeMemoryStream(stream);
-                    return base64;
-                }
-                
-                public void NextPage() => Page++;
-                
-                public void PreviousPage() => Page--;
-                
-                public void ClampPage(short maxPage) => Page = Page.Clamp((short)0, maxPage);
-                
-                public void NextSort() => Sort = EnumCache<SortBy>.Instance.Next(Sort);
-                
-                public override string ToString()
-                {
-                    return $"{{ Command = '{Command}' Sort = {Sort.ToString()} Page = {Page} }}";
-                }
-            }
-            #endregion
-
-            #region Templates\TemplateKeys.cs
-            public static class TemplateKeys
-            {
-                public static class Errors
-                {
-                    private const string Base = nameof(Errors) + ".";
-                    
-                    public const string UnknownState = Base + nameof(UnknownState);
-                    public const string UnknownCommand = Base + nameof(UnknownCommand);
-                }
-            }
-            #endregion
-
         }
+        #endregion
+
+        #region Cache\PlayerListCache.cs
+        public class PlayerListCache
+        {
+            private readonly List<IPlayer> _allList = new List<IPlayer>();
+            private readonly List<IPlayer> _nonAdminList = new List<IPlayer>();
+            
+            private readonly IComparer<IPlayer> _comparer;
+            
+            public PlayerListCache(IComparer<IPlayer> comparer)
+            {
+                _comparer = comparer;
+            }
+            
+            public void Add(IPlayer player)
+            {
+                Remove(player);
+                Insert(_allList, player);
+                Insert(_nonAdminList, player);
+            }
+            
+            public void Insert(List<IPlayer> list, IPlayer player)
+            {
+                int index = list.BinarySearch(player, _comparer);
+                if (index < 0)
+                {
+                    list.Insert(~index, player);
+                }
+                else
+                {
+                    list[index] = player;
+                }
+            }
+            
+            public void Remove(IPlayer player)
+            {
+                _allList.Remove(player);
+                _nonAdminList.Remove(player);
+            }
+            
+            public List<IPlayer> GetList(bool includeAdmin)
+            {
+                return includeAdmin ? _allList : _nonAdminList;
+            }
+        }
+        #endregion
+
+        #region Configuration\BaseMessageSettings.cs
+        public abstract class BaseMessageSettings
+        {
+            [JsonProperty(PropertyName = "Display Admins In The Player List", Order = 1001)]
+            public bool ShowAdmins { get; set; }
+            
+            [DefaultValue(25)]
+            [JsonProperty(PropertyName = "Players Per Embed (0 - 25)", Order = 1002)]
+            public int EmbedFieldLimit { get; set; }
+            
+            public abstract bool IsPermanent();
+            public abstract string GetTemplateName();
+            
+            [JsonConstructor]
+            public BaseMessageSettings() { }
+            
+            public BaseMessageSettings(BaseMessageSettings settings)
+            {
+                ShowAdmins = settings?.ShowAdmins ?? true;
+                EmbedFieldLimit = settings?.EmbedFieldLimit ?? 25;
+            }
+        }
+        #endregion
+
+        #region Configuration\CommandSettings.cs
+        public class CommandSettings : BaseMessageSettings
+        {
+            [JsonProperty(PropertyName = "Command Name (Must Be Unique)")]
+            public string Command { get; set; }
+            
+            [JsonProperty(PropertyName = "Allow Command In Direct Messages")]
+            public bool AllowInDm { get; set; }
+            
+            [JsonConstructor]
+            public CommandSettings() { }
+            
+            public CommandSettings(CommandSettings settings) : base(settings)
+            {
+                Command = settings?.Command ?? "players";
+                AllowInDm = settings?.AllowInDm ?? true;
+            }
+            
+            public override bool IsPermanent() => false;
+            public override string GetTemplateName() => Command;
+        }
+        #endregion
+
+        #region Configuration\PermanentMessageSettings.cs
+        public class PermanentMessageSettings : BaseMessageSettings
+        {
+            [JsonProperty(PropertyName = "Enabled")]
+            public bool Enabled { get; set; }
+            
+            [JsonProperty(PropertyName = "Template Name (Must Be Unique)")]
+            public string TemplateName { get; set; }
+            
+            [JsonProperty(PropertyName = "Permanent Message Channel ID")]
+            public Snowflake ChannelId { get; set; }
+            
+            [JsonProperty(PropertyName = "Update Rate (Minutes)")]
+            public float UpdateRate { get; set; }
+            
+            [JsonConstructor]
+            public PermanentMessageSettings() { }
+            
+            public PermanentMessageSettings(PermanentMessageSettings settings) : base(settings)
+            {
+                Enabled = settings?.Enabled ?? false;
+                TemplateName = settings?.TemplateName ?? "Permanent";
+                ChannelId = settings?.ChannelId ?? default(Snowflake);
+                UpdateRate = settings?.UpdateRate ?? 1f;
+            }
+            
+            public override bool IsPermanent() => true;
+            public override string GetTemplateName() => TemplateName;
+        }
+        #endregion
+
+        #region Configuration\PluginConfig.cs
+        public class PluginConfig
+        {
+            [DefaultValue("")]
+            [JsonProperty(PropertyName = "Discord Bot Token")]
+            public string DiscordApiKey { get; set; }
+            
+            [JsonProperty(PropertyName = "Command Messages")]
+            public List<CommandSettings> CommandMessages { get; set; }
+            
+            [JsonProperty(PropertyName = "Permanent Messages")]
+            public List<PermanentMessageSettings> Permanent { get; set; }
+            
+            [JsonConverter(typeof(StringEnumConverter))]
+            [DefaultValue(DiscordLogLevel.Info)]
+            [JsonProperty(PropertyName = "Discord Extension Log Level (Verbose, Debug, Info, Warning, Error, Exception, Off)")]
+            public DiscordLogLevel ExtensionDebugging { get; set; }
+        }
+        #endregion
+
+        #region Data\PermanentMessageData.cs
+        public class PermanentMessageData
+        {
+            public Snowflake MessageId { get; set; }
+        }
+        #endregion
+
+        #region Data\PluginData.cs
+        public class PluginData
+        {
+            public Hash<string, PermanentMessageData> PermanentMessageIds = new Hash<string, PermanentMessageData>();
+            public Hash<string, Snowflake> RegisteredCommands = new Hash<string, Snowflake>();
+            
+            public PermanentMessageData GetPermanentMessage(PermanentMessageSettings config)
+            {
+                return PermanentMessageIds[config.TemplateName];
+            }
+            
+            public void SetPermanentMessage(PermanentMessageSettings config, PermanentMessageData data)
+            {
+                PermanentMessageIds[config.TemplateName] = data;
+            }
+        }
+        #endregion
+
+        #region Enums\SortBy.cs
+        public enum SortBy : byte
+        {
+            Name,
+            Time
+        }
+        #endregion
+
+        #region Handlers\PermanentMessageHandler.cs
+        public class PermanentMessageHandler
+        {
+            private readonly DiscordClient _client;
+            private readonly MessageCache _cache;
+            private readonly DiscordMessage _message;
+            private readonly MessageUpdate _update = new MessageUpdate();
+            private readonly Timer _timer;
+            private DateTime _lastUpdate;
+            
+            public PermanentMessageHandler(DiscordClient client, MessageCache cache, float updateRate, DiscordMessage message)
+            {
+                _client = client;
+                _cache = cache;
+                _message = message;
+                _timer = DiscordPlayers.Instance.Timer.Every(updateRate * 60f, SendUpdate);
+                SendUpdate();
+            }
+            
+            private void SendUpdate()
+            {
+                if (_lastUpdate + TimeSpan.FromSeconds(5) > DateTime.UtcNow)
+                {
+                    return;
+                }
+                
+                _lastUpdate = DateTime.UtcNow;
+                
+                DiscordPlayers.Instance.CreateMessage(_cache, null, _update, message =>
+                {
+                    _message.Edit(_client, message).Catch<ResponseError>(error =>
+                    {
+                        if (error.HttpStatusCode == DiscordHttpStatusCode.NotFound)
+                        {
+                            _timer?.Destroy();
+                        }
+                    });
+                });
+            }
+        }
+        #endregion
+
+        #region Lang\LangKeys.cs
+        public static class LangKeys
+        {
+            public const string SortByEnumName = nameof(SortByEnumName);
+            public const string SortByEnumTime = nameof(SortByEnumTime);
+        }
+        #endregion
+
+        #region Placeholders\PlaceholderDataKeys.cs
+        public static class PlaceholderDataKeys
+        {
+            public static readonly PlaceholderDataKey CommandId = new PlaceholderDataKey("command.id");
+            public static readonly PlaceholderDataKey CommandName = new PlaceholderDataKey("command.name");
+            public static readonly PlaceholderDataKey PlayerIndex = new PlaceholderDataKey("player.index");
+            public static readonly PlaceholderDataKey PlayerDuration = new PlaceholderDataKey("timespan");
+            public static readonly PlaceholderDataKey MaxPage = new PlaceholderDataKey("page.max");
+            public static readonly PlaceholderDataKey MessageState = new PlaceholderDataKey("message.state");
+        }
+        #endregion
+
+        #region Placeholders\PlaceholderKeys.cs
+        public class PlaceholderKeys
+        {
+            public static readonly PlaceholderKey PlayerIndex = new PlaceholderKey(nameof(DiscordPlayers), "player.index");
+            public static readonly PlaceholderKey Page = new PlaceholderKey(nameof(DiscordPlayers), "state.page");
+            public static readonly PlaceholderKey SortState = new PlaceholderKey(nameof(DiscordPlayers), "state.sort");
+            public static readonly PlaceholderKey CommandId = new PlaceholderKey(nameof(DiscordPlayers), "command.id");
+            public static readonly PlaceholderKey CommandName = new PlaceholderKey(nameof(DiscordPlayers), "command.name");
+            public static readonly PlaceholderKey MaxPage = new PlaceholderKey(nameof(DiscordPlayers), "page.max");
+        }
+        #endregion
+
+        #region State\MessageState.cs
+        [ProtoContract]
+        public class MessageState
+        {
+            [ProtoMember(1)]
+            public short Page;
+            
+            [ProtoMember(2)]
+            public SortBy Sort;
+            
+            [ProtoMember(3)]
+            public string Command;
+            
+            private MessageState() { }
+            
+            public static MessageState CreateNew(string command)
+            {
+                return new MessageState
+                {
+                    Command = command
+                };
+            }
+            
+            public static MessageState Create(string base64)
+            {
+                try
+                {
+                    byte[] data = Convert.FromBase64String(base64);
+                    MemoryStream stream = DiscordPlayers.Instance.Pool.GetMemoryStream();
+                    stream.Write(data, 0, data.Length);
+                    stream.Position = 0;
+                    MessageState state = Serializer.Deserialize<MessageState>(stream);
+                    DiscordPlayers.Instance.Pool.FreeMemoryStream(stream);
+                    return state;
+                }
+                catch (Exception ex)
+                {
+                    DiscordPlayers.Instance.PrintError($"An error occured parsing state. State: {base64}. Exception:\n{ex}");
+                    return null;
+                }
+            }
+            
+            public string CreateBase64String()
+            {
+                MemoryStream stream = DiscordPlayers.Instance.Pool.GetMemoryStream();
+                Serializer.Serialize(stream, this);
+                stream.TryGetBuffer(out ArraySegment<byte> buffer);
+                string base64 = Convert.ToBase64String(buffer.AsSpan());
+                DiscordPlayers.Instance.Pool.FreeMemoryStream(stream);
+                return base64;
+            }
+            
+            public void NextPage() => Page++;
+            
+            public void PreviousPage() => Page--;
+            
+            public void ClampPage(short maxPage) => Page = Page.Clamp((short)0, maxPage);
+            
+            public void NextSort() => Sort = EnumCache<SortBy>.Instance.Next(Sort);
+            
+            public override string ToString()
+            {
+                return $"{{ Command = '{Command}' Sort = {Sort.ToString()} Page = {Page} }}";
+            }
+        }
+        #endregion
+
+        #region Templates\TemplateKeys.cs
+        public static class TemplateKeys
+        {
+            public static class Errors
+            {
+                private const string Base = nameof(Errors) + ".";
+                
+                public const string UnknownState = Base + nameof(UnknownState);
+                public const string UnknownCommand = Base + nameof(UnknownCommand);
+            }
+        }
+        #endregion
 
     }
+
+}

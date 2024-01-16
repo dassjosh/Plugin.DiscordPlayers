@@ -1,8 +1,7 @@
-namespace DiscordPlayersPlugin.Enums
+namespace DiscordPlayersPlugin.Enums;
+
+public enum SortBy : byte
 {
-    public enum SortBy : byte
-    {
-        Name, 
-        Time
-    }
+    Name, 
+    Time
 }

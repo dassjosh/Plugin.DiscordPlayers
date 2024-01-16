@@ -4,23 +4,22 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Oxide.Ext.Discord.Logging;
 
-namespace DiscordPlayersPlugin.Configuration
+namespace DiscordPlayersPlugin.Configuration;
+
+public class PluginConfig
 {
-    public class PluginConfig
-    {
-        [DefaultValue("")]
-        [JsonProperty(PropertyName = "Discord Bot Token")]
-        public string DiscordApiKey { get; set; }
+    [DefaultValue("")]
+    [JsonProperty(PropertyName = "Discord Bot Token")]
+    public string DiscordApiKey { get; set; }
 
-        [JsonProperty(PropertyName = "Command Messages")]
-        public List<CommandSettings> CommandMessages { get; set; }
+    [JsonProperty(PropertyName = "Command Messages")]
+    public List<CommandSettings> CommandMessages { get; set; }
         
-        [JsonProperty(PropertyName = "Permanent Messages")]
-        public List<PermanentMessageSettings> Permanent { get; set; }
+    [JsonProperty(PropertyName = "Permanent Messages")]
+    public List<PermanentMessageSettings> Permanent { get; set; }
 
-        [JsonConverter(typeof(StringEnumConverter))]
-        [DefaultValue(DiscordLogLevel.Info)]
-        [JsonProperty(PropertyName = "Discord Extension Log Level (Verbose, Debug, Info, Warning, Error, Exception, Off)")]
-        public DiscordLogLevel ExtensionDebugging { get; set; }
-    }
+    [JsonConverter(typeof(StringEnumConverter))]
+    [DefaultValue(DiscordLogLevel.Info)]
+    [JsonProperty(PropertyName = "Discord Extension Log Level (Verbose, Debug, Info, Warning, Error, Exception, Off)")]
+    public DiscordLogLevel ExtensionDebugging { get; set; }
 }
