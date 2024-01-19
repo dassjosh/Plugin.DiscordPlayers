@@ -43,7 +43,7 @@ namespace Oxide.Plugins
         
         private PluginConfig AdditionalConfig(PluginConfig config)
         {
-            config.CommandMessages = config.CommandMessages ?? new List<CommandSettings>();
+            config.CommandMessages ??= new List<CommandSettings>();
             if (config.CommandMessages.Count == 0)
             {
                 config.CommandMessages.Add(new CommandSettings
@@ -63,9 +63,9 @@ namespace Oxide.Plugins
                 });
             }
             
-            config.Permanent = config.Permanent ?? new List<PermanentMessageSettings>
+            config.Permanent ??= new List<PermanentMessageSettings>
             {
-                new PermanentMessageSettings
+                new()
                 {
                     Enabled = false,
                     ChannelId = new Snowflake(0),
@@ -76,13 +76,13 @@ namespace Oxide.Plugins
             
             for (int index = 0; index < config.CommandMessages.Count; index++)
             {
-                CommandSettings settings = new CommandSettings(config.CommandMessages[index]);
+                CommandSettings settings = new(config.CommandMessages[index]);
                 config.CommandMessages[index] = settings;
             }
             
             for (int index = 0; index < config.Permanent.Count; index++)
             {
-                PermanentMessageSettings settings = new PermanentMessageSettings(config.Permanent[index]);
+                PermanentMessageSettings settings = new(config.Permanent[index]);
                 config.Permanent[index] = settings;
             }
             
@@ -135,7 +135,7 @@ namespace Oxide.Plugins
                 return;
             }
             
-            ApplicationCommandBuilder builder = new ApplicationCommandBuilder(command, "Shows players currently on the server", ApplicationCommandType.ChatInput);
+            ApplicationCommandBuilder builder = new(command, "Shows players currently on the server", ApplicationCommandType.ChatInput);
             builder.AllowInDirectMessages(settings.AllowInDm);
             builder.AddDefaultPermissions(PermissionFlags.None);
             
@@ -172,6 +172,7 @@ namespace Oxide.Plugins
                 DiscordChannel channel = created.GetChannel(config.ChannelId);
                 if (channel == null)
                 {
+                    PrintWarning($"Failed to find channel ID: {config.ChannelId} in Guild: {created.Name}");
                     continue;
                 }
                 
@@ -179,7 +180,12 @@ namespace Oxide.Plugins
                 PermanentMessageData existing = _pluginData.GetPermanentMessage(config);
                 if (existing != null)
                 {
-                    channel.GetMessage(Client, existing.MessageId).Catch<ResponseError>(error =>
+                    channel.GetMessage(Client, existing.MessageId)
+                    .Then(message =>
+                    {
+                        _permanentHandler[message.Id] = new PermanentMessageHandler(Client, new MessageCache(config), config.UpdateRate, message);
+                    })
+                    .Catch<ResponseError>(error =>
                     {
                         if (error.HttpStatusCode == DiscordHttpStatusCode.NotFound)
                         {
@@ -197,7 +203,7 @@ namespace Oxide.Plugins
         
         private void CreatePermanentMessage(PermanentMessageSettings config, DiscordChannel channel)
         {
-            MessageCache cache = new MessageCache(config);
+            MessageCache cache = new(config);
             
             CreateMessage<MessageCreate>(cache, null, null, create =>
             {
@@ -207,6 +213,7 @@ namespace Oxide.Plugins
                     {
                         MessageId = message.Id
                     });
+                    _permanentHandler[message.Id] = new PermanentMessageHandler(Client, cache, config.UpdateRate, message);
                     SaveData();
                 });
             });
@@ -217,7 +224,7 @@ namespace Oxide.Plugins
             MessageCache cache = GetCache(interaction);
             if (cache == null)
             {
-                Puts("Cache is null!!");
+                PrintError("Cache is null!!");
                 return;
             }
             
@@ -309,11 +316,13 @@ namespace Oxide.Plugins
         private readonly DiscordEmbedFieldTemplates _field = GetLibrary<DiscordEmbedFieldTemplates>();
         private readonly DiscordCommandLocalizations _localizations = GetLibrary<DiscordCommandLocalizations>();
         
-        private readonly BotConnection _discordSettings = new BotConnection();
+        private readonly BotConnection _discordSettings = new();
         
-        private readonly Hash<Snowflake, MessageCache> _messageCache = new Hash<Snowflake, MessageCache>();
-        private readonly Hash<string, BaseMessageSettings> _commandCache = new Hash<string, BaseMessageSettings>();
-        private readonly OnlinePlayerCache _playerCache = new OnlinePlayerCache();
+        private readonly Hash<Snowflake, MessageCache> _messageCache = new();
+        private readonly Hash<string, BaseMessageSettings> _commandCache = new();
+        private readonly OnlinePlayerCache _playerCache = new();
+        
+        private readonly Hash<Snowflake, PermanentMessageHandler> _permanentHandler = new();
         
         private const string BaseCommand = nameof(DiscordPlayers) + ".";
         private const string BackCommand = BaseCommand + "B";
@@ -337,7 +346,6 @@ namespace Oxide.Plugins
             {
                 InteractionDataParsed args = interaction.Parsed;
                 command = _commandCache[args.Command];
-                Puts($"Command ({args.Command}) = {command != null}");
                 return command != null ? new MessageCache(command) : null;
             }
             
@@ -499,7 +507,7 @@ namespace Oxide.Plugins
                 template = _field.GetLocalizedTemplate(this, cache.Settings.GetTemplateName(), interaction);
             }
             
-            List<PlaceholderData> placeholders = new List<PlaceholderData>();
+            List<PlaceholderData> placeholders = new();
             
             for (int index = 0; index < onlineList.Count; index++)
             {
@@ -512,11 +520,7 @@ namespace Oxide.Plugins
         
         public void ProcessEmbeds(DiscordEmbed embed, List<EmbedField> fields)
         {
-            if (embed.Fields == null)
-            {
-                embed.Fields = new List<EmbedField>();
-            }
-            
+            embed.Fields ??= new List<EmbedField>();
             embed.Fields.AddRange(fields);
         }
         #endregion
@@ -543,7 +547,7 @@ namespace Oxide.Plugins
         public PlaceholderData CloneForPlayer(PlaceholderData source, IPlayer player, int index)
         {
             DiscordUser user = player.GetDiscordUser();
-            var onlineDuration = _playerCache.GetOnlineDuration(player);
+            TimeSpan onlineDuration = _playerCache.GetOnlineDuration(player);
             return source.Clone()
             .RemoveUser()
             .AddUser(user)
@@ -710,7 +714,7 @@ namespace Oxide.Plugins
         
         public DiscordEmbedFieldTemplate GetDefaultFieldTemplate()
         {
-            return new DiscordEmbedFieldTemplate($"#{PlaceholderKeys.PlayerIndex} {DefaultKeys.Player.NameClan}", $"**Connected:** {DefaultKeys.Timespan.Hours} {DefaultKeys.Timespan.Minutes}m {DefaultKeys.Timespan.Seconds}s");
+            return new DiscordEmbedFieldTemplate($"#{PlaceholderKeys.PlayerIndex} {DefaultKeys.Player.NameClan}", $"**Connected:** {DefaultKeys.Timespan.Hours}h {DefaultKeys.Timespan.Minutes}m {DefaultKeys.Timespan.Seconds}s");
         }
         
         public DiscordEmbedFieldTemplate GetDefaultAdminFieldTemplate()
@@ -729,7 +733,7 @@ namespace Oxide.Plugins
             {
                 Embeds = new List<DiscordEmbedTemplate>
                 {
-                    new DiscordEmbedTemplate
+                    new()
                     {
                         Description = $"[{DefaultKeys.Plugin.Title}] {description}",
                         Color = color.ToHex()
@@ -756,9 +760,9 @@ namespace Oxide.Plugins
         #region Cache\OnlinePlayerCache.cs
         public class OnlinePlayerCache
         {
-            private readonly PlayerListCache _byNameCache = new PlayerListCache(new NameComparer());
+            private readonly PlayerListCache _byNameCache = new(new NameComparer());
             private readonly PlayerListCache _byOnlineTime;
-            private readonly Hash<string, DateTime> _onlineSince = new Hash<string, DateTime>();
+            private readonly Hash<string, DateTime> _onlineSince = new();
             
             public OnlinePlayerCache()
             {
@@ -834,8 +838,8 @@ namespace Oxide.Plugins
         #region Cache\PlayerListCache.cs
         public class PlayerListCache
         {
-            private readonly List<IPlayer> _allList = new List<IPlayer>();
-            private readonly List<IPlayer> _nonAdminList = new List<IPlayer>();
+            private readonly List<IPlayer> _allList = new();
+            private readonly List<IPlayer> _nonAdminList = new();
             
             private readonly IComparer<IPlayer> _comparer;
             
@@ -985,8 +989,8 @@ namespace Oxide.Plugins
         #region Data\PluginData.cs
         public class PluginData
         {
-            public Hash<string, PermanentMessageData> PermanentMessageIds = new Hash<string, PermanentMessageData>();
-            public Hash<string, Snowflake> RegisteredCommands = new Hash<string, Snowflake>();
+            public Hash<string, PermanentMessageData> PermanentMessageIds = new();
+            public Hash<string, Snowflake> RegisteredCommands = new();
             
             public PermanentMessageData GetPermanentMessage(PermanentMessageSettings config)
             {
@@ -1014,7 +1018,7 @@ namespace Oxide.Plugins
             private readonly DiscordClient _client;
             private readonly MessageCache _cache;
             private readonly DiscordMessage _message;
-            private readonly MessageUpdate _update = new MessageUpdate();
+            private readonly MessageUpdate _update = new();
             private readonly Timer _timer;
             private DateTime _lastUpdate;
             
@@ -1061,24 +1065,24 @@ namespace Oxide.Plugins
         #region Placeholders\PlaceholderDataKeys.cs
         public static class PlaceholderDataKeys
         {
-            public static readonly PlaceholderDataKey CommandId = new PlaceholderDataKey("command.id");
-            public static readonly PlaceholderDataKey CommandName = new PlaceholderDataKey("command.name");
-            public static readonly PlaceholderDataKey PlayerIndex = new PlaceholderDataKey("player.index");
-            public static readonly PlaceholderDataKey PlayerDuration = new PlaceholderDataKey("timespan");
-            public static readonly PlaceholderDataKey MaxPage = new PlaceholderDataKey("page.max");
-            public static readonly PlaceholderDataKey MessageState = new PlaceholderDataKey("message.state");
+            public static readonly PlaceholderDataKey CommandId = new("command.id");
+            public static readonly PlaceholderDataKey CommandName = new("command.name");
+            public static readonly PlaceholderDataKey PlayerIndex = new("player.index");
+            public static readonly PlaceholderDataKey PlayerDuration = new("timespan");
+            public static readonly PlaceholderDataKey MaxPage = new("page.max");
+            public static readonly PlaceholderDataKey MessageState = new("message.state");
         }
         #endregion
 
         #region Placeholders\PlaceholderKeys.cs
         public class PlaceholderKeys
         {
-            public static readonly PlaceholderKey PlayerIndex = new PlaceholderKey(nameof(DiscordPlayers), "player.index");
-            public static readonly PlaceholderKey Page = new PlaceholderKey(nameof(DiscordPlayers), "state.page");
-            public static readonly PlaceholderKey SortState = new PlaceholderKey(nameof(DiscordPlayers), "state.sort");
-            public static readonly PlaceholderKey CommandId = new PlaceholderKey(nameof(DiscordPlayers), "command.id");
-            public static readonly PlaceholderKey CommandName = new PlaceholderKey(nameof(DiscordPlayers), "command.name");
-            public static readonly PlaceholderKey MaxPage = new PlaceholderKey(nameof(DiscordPlayers), "page.max");
+            public static readonly PlaceholderKey PlayerIndex = new(nameof(DiscordPlayers), "player.index");
+            public static readonly PlaceholderKey Page = new(nameof(DiscordPlayers), "state.page");
+            public static readonly PlaceholderKey SortState = new(nameof(DiscordPlayers), "state.sort");
+            public static readonly PlaceholderKey CommandId = new(nameof(DiscordPlayers), "command.id");
+            public static readonly PlaceholderKey CommandName = new(nameof(DiscordPlayers), "command.name");
+            public static readonly PlaceholderKey MaxPage = new(nameof(DiscordPlayers), "page.max");
         }
         #endregion
 

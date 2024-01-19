@@ -1,6 +1,7 @@
 using DiscordPlayersPlugin.Cache;
 using DiscordPlayersPlugin.Configuration;
 using DiscordPlayersPlugin.Data;
+using DiscordPlayersPlugin.Handlers;
 using Oxide.Ext.Discord.Clients;
 using Oxide.Ext.Discord.Connections;
 using Oxide.Ext.Discord.Entities;
@@ -30,6 +31,8 @@ public partial class DiscordPlayers
     private readonly Hash<Snowflake, MessageCache> _messageCache = new();
     private readonly Hash<string, BaseMessageSettings> _commandCache = new();
     private readonly OnlinePlayerCache _playerCache = new();
+
+    private readonly Hash<Snowflake, PermanentMessageHandler> _permanentHandler = new();
 
     private const string BaseCommand = nameof(DiscordPlayers) + ".";
     private const string BackCommand = BaseCommand + "B";

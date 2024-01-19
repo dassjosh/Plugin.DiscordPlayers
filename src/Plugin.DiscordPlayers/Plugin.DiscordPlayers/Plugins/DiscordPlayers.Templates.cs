@@ -88,7 +88,7 @@ public partial class DiscordPlayers
 
     public DiscordEmbedFieldTemplate GetDefaultFieldTemplate()
     {
-        return new DiscordEmbedFieldTemplate($"#{PlaceholderKeys.PlayerIndex} {DefaultKeys.Player.NameClan}", $"**Connected:** {DefaultKeys.Timespan.Hours} {DefaultKeys.Timespan.Minutes}m {DefaultKeys.Timespan.Seconds}s");
+        return new DiscordEmbedFieldTemplate($"#{PlaceholderKeys.PlayerIndex} {DefaultKeys.Player.NameClan}", $"**Connected:** {DefaultKeys.Timespan.Hours}h {DefaultKeys.Timespan.Minutes}m {DefaultKeys.Timespan.Seconds}s");
     }
         
     public DiscordEmbedFieldTemplate GetDefaultAdminFieldTemplate()

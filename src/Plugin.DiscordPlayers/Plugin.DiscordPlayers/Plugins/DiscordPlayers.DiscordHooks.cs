@@ -3,6 +3,7 @@ using System.Linq;
 using DiscordPlayersPlugin.Cache;
 using DiscordPlayersPlugin.Configuration;
 using DiscordPlayersPlugin.Data;
+using DiscordPlayersPlugin.Handlers;
 using Oxide.Core.Plugins;
 using Oxide.Ext.Discord.Attributes;
 using Oxide.Ext.Discord.Builders;
@@ -95,6 +96,7 @@ public partial class DiscordPlayers
             DiscordChannel channel = created.GetChannel(config.ChannelId);
             if (channel == null)
             {
+                PrintWarning($"Failed to find channel ID: {config.ChannelId} in Guild: {created.Name}");
                 continue;
             }
 
@@ -102,14 +104,19 @@ public partial class DiscordPlayers
             PermanentMessageData existing = _pluginData.GetPermanentMessage(config);
             if (existing != null)
             {
-                channel.GetMessage(Client, existing.MessageId).Catch<ResponseError>(error =>
-                {
-                    if (error.HttpStatusCode == DiscordHttpStatusCode.NotFound)
+                channel.GetMessage(Client, existing.MessageId)
+                    .Then(message =>
                     {
-                        CreatePermanentMessage(config, channel);
-                        error.SuppressErrorMessage();
-                    }
-                });
+                        _permanentHandler[message.Id] = new PermanentMessageHandler(Client, new MessageCache(config), config.UpdateRate, message);
+                    })
+                    .Catch<ResponseError>(error =>
+                    {
+                        if (error.HttpStatusCode == DiscordHttpStatusCode.NotFound)
+                        {
+                            CreatePermanentMessage(config, channel);
+                            error.SuppressErrorMessage();
+                        }
+                    });
             }
             else
             {
@@ -121,7 +128,7 @@ public partial class DiscordPlayers
     private void CreatePermanentMessage(PermanentMessageSettings config, DiscordChannel channel)
     {
         MessageCache cache = new(config);
-
+        
         CreateMessage<MessageCreate>(cache, null, null, create =>
         {
             channel.CreateMessage(Client, create).Then(message =>
@@ -130,6 +137,7 @@ public partial class DiscordPlayers
                 {
                     MessageId = message.Id
                 });
+                _permanentHandler[message.Id] = new PermanentMessageHandler(Client, cache, config.UpdateRate, message);
                 SaveData();
             });
         });
@@ -140,7 +148,7 @@ public partial class DiscordPlayers
         MessageCache cache = GetCache(interaction);
         if (cache == null)
         {
-            Puts("Cache is null!!");
+            PrintError("Cache is null!!");
             return;
         }
             
