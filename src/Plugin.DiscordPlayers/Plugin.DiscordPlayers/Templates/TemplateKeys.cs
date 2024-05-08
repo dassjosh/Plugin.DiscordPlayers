@@ -1,3 +1,5 @@
+using Oxide.Ext.Discord.Libraries;
+
 namespace DiscordPlayersPlugin.Templates;
 
 public static class TemplateKeys
@@ -6,7 +8,7 @@ public static class TemplateKeys
     {
         private const string Base = nameof(Errors) + ".";
 
-        public const string UnknownState = Base + nameof(UnknownState);
-        public const string UnknownCommand = Base + nameof(UnknownCommand);
+        public static readonly TemplateKey UnknownState = new(Base + nameof(UnknownState));
+        public static readonly TemplateKey UnknownCommand = new(Base + nameof(UnknownCommand));
     }
 }

@@ -100,7 +100,7 @@ public partial class DiscordPlayers
                 continue;
             }
 
-            _commandCache[config.GetTemplateName()] = config;
+            _commandCache[config.GetTemplateName().Name] = config;
             PermanentMessageData existing = _pluginData.GetPermanentMessage(config);
             if (existing != null)
             {

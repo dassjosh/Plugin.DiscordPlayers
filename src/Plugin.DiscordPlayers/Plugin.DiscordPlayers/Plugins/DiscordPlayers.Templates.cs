@@ -33,7 +33,7 @@ public partial class DiscordPlayers
     private void CreateCommandTemplates(BaseMessageSettings command, DiscordEmbedFieldTemplate @default, bool isGlobal)
     {
         DiscordMessageTemplate template = CreateBaseMessage();
-        var name = command.GetTemplateName();
+        TemplateKey name = command.GetTemplateName();
         RegisterTemplate(_templates, name, template, isGlobal, new TemplateVersion(1, 0, 0), new TemplateVersion(1, 0, 0));
         RegisterTemplate(_field, name, @default, isGlobal, new TemplateVersion(1, 0, 0), new TemplateVersion(1, 0, 0));
 
@@ -41,7 +41,7 @@ public partial class DiscordPlayers
         RegisterTemplate(_embed, name, embed, isGlobal, new TemplateVersion(1, 0, 0), new TemplateVersion(1, 0, 0));
     }
 
-    public void RegisterTemplate<TTemplate>(BaseMessageTemplateLibrary<TTemplate> library, string name, TTemplate template, bool isGlobal, TemplateVersion version, TemplateVersion minVersion) where TTemplate : class, new()
+    public void RegisterTemplate<TTemplate>(BaseMessageTemplateLibrary<TTemplate> library, TemplateKey name, TTemplate template, bool isGlobal, TemplateVersion version, TemplateVersion minVersion) where TTemplate : class, new()
     {
         if (isGlobal)
         {

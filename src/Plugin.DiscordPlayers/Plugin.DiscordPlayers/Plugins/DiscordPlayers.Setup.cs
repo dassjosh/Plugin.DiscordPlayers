@@ -14,7 +14,7 @@ public partial class DiscordPlayers
         Instance = this;
         _discordSettings.ApiToken = _pluginConfig.DiscordApiKey;
         _discordSettings.LogLevel = _pluginConfig.ExtensionDebugging;
-        _discordSettings.Intents = GatewayIntents.Guilds | GatewayIntents.GuildMembers;
+        _discordSettings.Intents = GatewayIntents.Guilds;
 
         _pluginData = Interface.Oxide.DataFileSystem.ReadObject<PluginData>(Name) ?? new PluginData();
     }

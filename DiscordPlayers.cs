@@ -17,13 +17,14 @@ using Oxide.Ext.Discord.Logging;
 using Oxide.Ext.Discord.Types;
 using ProtoBuf;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using UnityEngine;
 
-//DiscordPlayers created with PluginMerge v(1.0.7.0) by MJSU @ https://github.com/dassjosh/Plugin.Merge
+//DiscordPlayers created with PluginMerge v(1.0.8.0) by MJSU @ https://github.com/dassjosh/Plugin.Merge
 namespace Oxide.Plugins
 {
     [Info("Discord Players", "MJSU", "3.0.0")]
@@ -176,7 +177,7 @@ namespace Oxide.Plugins
                     continue;
                 }
                 
-                _commandCache[config.GetTemplateName()] = config;
+                _commandCache[config.GetTemplateName().Name] = config;
                 PermanentMessageData existing = _pluginData.GetPermanentMessage(config);
                 if (existing != null)
                 {
@@ -356,7 +357,7 @@ namespace Oxide.Plugins
                 return cache;
             }
             
-            string base64 = customId.Substring(customId.LastIndexOf(" ", StringComparison.Ordinal) + 1);
+            ReadOnlySpan<char> base64 = customId.AsSpan()[(customId.LastIndexOf(" ", StringComparison.Ordinal) + 1)..];
             MessageState state = MessageState.Create(base64);
             if (state == null)
             {
@@ -376,7 +377,7 @@ namespace Oxide.Plugins
             return cache;
         }
         
-        public void SendResponse(DiscordInteraction interaction, string templateName, PlaceholderData data, MessageFlags flags = MessageFlags.Ephemeral)
+        public void SendResponse(DiscordInteraction interaction, TemplateKey templateName, PlaceholderData data, MessageFlags flags = MessageFlags.Ephemeral)
         {
             interaction.CreateTemplateResponse(Client, InteractionResponseType.ChannelMessageWithSource, templateName, new InteractionCallbackData { Flags = flags }, data);
         }
@@ -491,7 +492,7 @@ namespace Oxide.Plugins
         
         public DiscordEmbed CreateEmbeds(BaseMessageSettings settings, PlaceholderData data, DiscordInteraction interaction)
         {
-            string name = settings.GetTemplateName();
+            TemplateKey name = settings.GetTemplateName();
             return settings.IsPermanent() ? _embed.GetGlobalTemplate(this, name).ToEntity(data) : _embed.GetLocalizedTemplate(this, name, interaction).ToEntity(data);
         }
         
@@ -507,15 +508,22 @@ namespace Oxide.Plugins
                 template = _field.GetLocalizedTemplate(this, cache.Settings.GetTemplateName(), interaction);
             }
             
-            List<PlaceholderData> placeholders = new();
+            List<PlaceholderData> placeholders = new(onlineList.Count);
             
             for (int index = 0; index < onlineList.Count; index++)
             {
                 PlaceholderData playerData = CloneForPlayer(data, onlineList[index], cache.State.Page * cache.Settings.EmbedFieldLimit + index + 1);
+                playerData.ManualPool();
                 placeholders.Add(playerData);
             }
             
-            return template.ToEntityBulk(placeholders);
+            return template.ToEntityBulk(placeholders).Finally(() =>
+            {
+                foreach (PlaceholderData data in placeholders)
+                {
+                    data.Dispose();
+                }
+            });
         }
         
         public void ProcessEmbeds(DiscordEmbed embed, List<EmbedField> fields)
@@ -582,7 +590,7 @@ namespace Oxide.Plugins
             Instance = this;
             _discordSettings.ApiToken = _pluginConfig.DiscordApiKey;
             _discordSettings.LogLevel = _pluginConfig.ExtensionDebugging;
-            _discordSettings.Intents = GatewayIntents.Guilds | GatewayIntents.GuildMembers;
+            _discordSettings.Intents = GatewayIntents.Guilds;
             
             _pluginData = Interface.Oxide.DataFileSystem.ReadObject<PluginData>(Name) ?? new PluginData();
         }
@@ -659,7 +667,7 @@ namespace Oxide.Plugins
         private void CreateCommandTemplates(BaseMessageSettings command, DiscordEmbedFieldTemplate @default, bool isGlobal)
         {
             DiscordMessageTemplate template = CreateBaseMessage();
-            var name = command.GetTemplateName();
+            TemplateKey name = command.GetTemplateName();
             RegisterTemplate(_templates, name, template, isGlobal, new TemplateVersion(1, 0, 0), new TemplateVersion(1, 0, 0));
             RegisterTemplate(_field, name, @default, isGlobal, new TemplateVersion(1, 0, 0), new TemplateVersion(1, 0, 0));
             
@@ -667,7 +675,7 @@ namespace Oxide.Plugins
             RegisterTemplate(_embed, name, embed, isGlobal, new TemplateVersion(1, 0, 0), new TemplateVersion(1, 0, 0));
         }
         
-        public void RegisterTemplate<TTemplate>(BaseMessageTemplateLibrary<TTemplate> library, string name, TTemplate template, bool isGlobal, TemplateVersion version, TemplateVersion minVersion) where TTemplate : class, new()
+        public void RegisterTemplate<TTemplate>(BaseMessageTemplateLibrary<TTemplate> library, TemplateKey name, TTemplate template, bool isGlobal, TemplateVersion version, TemplateVersion minVersion) where TTemplate : class, new()
         {
             if (isGlobal)
             {
@@ -892,7 +900,7 @@ namespace Oxide.Plugins
             public int EmbedFieldLimit { get; set; }
             
             public abstract bool IsPermanent();
-            public abstract string GetTemplateName();
+            public abstract TemplateKey GetTemplateName();
             
             [JsonConstructor]
             public BaseMessageSettings() { }
@@ -924,7 +932,7 @@ namespace Oxide.Plugins
             }
             
             public override bool IsPermanent() => false;
-            public override string GetTemplateName() => Command;
+            public override TemplateKey GetTemplateName() => new(Command);
         }
         #endregion
 
@@ -955,7 +963,7 @@ namespace Oxide.Plugins
             }
             
             public override bool IsPermanent() => true;
-            public override string GetTemplateName() => TemplateName;
+            public override TemplateKey GetTemplateName() => new(TemplateName);
         }
         #endregion
 
@@ -1101,21 +1109,23 @@ namespace Oxide.Plugins
             
             private MessageState() { }
             
-            public static MessageState CreateNew(string command)
+            public static MessageState CreateNew(TemplateKey command)
             {
                 return new MessageState
                 {
-                    Command = command
+                    Command = command.Name
                 };
             }
             
-            public static MessageState Create(string base64)
+            public static MessageState Create(ReadOnlySpan<char> base64)
             {
                 try
                 {
-                    byte[] data = Convert.FromBase64String(base64);
+                    Span<byte> buffer = stackalloc byte[64];
+                    Convert.TryFromBase64Chars(base64, buffer, out int written);
                     MemoryStream stream = DiscordPlayers.Instance.Pool.GetMemoryStream();
-                    stream.Write(data, 0, data.Length);
+                    stream.Write(buffer[..written]);
+                    stream.Flush();
                     stream.Position = 0;
                     MessageState state = Serializer.Deserialize<MessageState>(stream);
                     DiscordPlayers.Instance.Pool.FreeMemoryStream(stream);
@@ -1123,7 +1133,7 @@ namespace Oxide.Plugins
                 }
                 catch (Exception ex)
                 {
-                    DiscordPlayers.Instance.PrintError($"An error occured parsing state. State: {base64}. Exception:\n{ex}");
+                    DiscordPlayers.Instance.PrintError($"An error occured parsing state. State: {base64.ToString()}. Exception:\n{ex}");
                     return null;
                 }
             }
@@ -1160,8 +1170,8 @@ namespace Oxide.Plugins
             {
                 private const string Base = nameof(Errors) + ".";
                 
-                public const string UnknownState = Base + nameof(UnknownState);
-                public const string UnknownCommand = Base + nameof(UnknownCommand);
+                public static readonly TemplateKey UnknownState = new(Base + nameof(UnknownState));
+                public static readonly TemplateKey UnknownCommand = new(Base + nameof(UnknownCommand));
             }
         }
         #endregion

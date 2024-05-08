@@ -31,8 +31,8 @@ public partial class DiscordPlayers
         {
             return cache;
         }
-            
-        string base64 = customId.Substring(customId.LastIndexOf(" ", StringComparison.Ordinal) + 1);
+
+        ReadOnlySpan<char> base64 = customId.AsSpan()[(customId.LastIndexOf(" ", StringComparison.Ordinal) + 1)..];
         MessageState state = MessageState.Create(base64);
         if (state == null)
         {
@@ -52,7 +52,7 @@ public partial class DiscordPlayers
         return cache;
     }
 
-    public void SendResponse(DiscordInteraction interaction, string templateName, PlaceholderData data, MessageFlags flags = MessageFlags.Ephemeral)
+    public void SendResponse(DiscordInteraction interaction, TemplateKey templateName, PlaceholderData data, MessageFlags flags = MessageFlags.Ephemeral)
     {
         interaction.CreateTemplateResponse(Client, InteractionResponseType.ChannelMessageWithSource, templateName, new InteractionCallbackData { Flags = flags }, data);
     }

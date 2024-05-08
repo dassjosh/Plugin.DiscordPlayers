@@ -82,7 +82,7 @@ public partial class DiscordPlayers
 
     public DiscordEmbed CreateEmbeds(BaseMessageSettings settings, PlaceholderData data, DiscordInteraction interaction)
     {
-        string name = settings.GetTemplateName();
+        TemplateKey name = settings.GetTemplateName();
         return settings.IsPermanent() ? _embed.GetGlobalTemplate(this, name).ToEntity(data) : _embed.GetLocalizedTemplate(this, name, interaction).ToEntity(data);
     }
 
@@ -98,15 +98,22 @@ public partial class DiscordPlayers
             template = _field.GetLocalizedTemplate(this, cache.Settings.GetTemplateName(), interaction);
         }
             
-        List<PlaceholderData> placeholders = new();
+        List<PlaceholderData> placeholders = new(onlineList.Count);
 
         for (int index = 0; index < onlineList.Count; index++)
         {
             PlaceholderData playerData = CloneForPlayer(data, onlineList[index], cache.State.Page * cache.Settings.EmbedFieldLimit + index + 1);
+            playerData.ManualPool();
             placeholders.Add(playerData);
         }
             
-        return template.ToEntityBulk(placeholders);
+        return template.ToEntityBulk(placeholders).Finally(() =>
+        {
+            foreach (PlaceholderData data in placeholders)
+            {
+                data.Dispose();
+            }
+        });
     }
         
     public void ProcessEmbeds(DiscordEmbed embed, List<EmbedField> fields)

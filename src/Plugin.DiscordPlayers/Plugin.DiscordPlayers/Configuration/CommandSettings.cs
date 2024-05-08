@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Oxide.Ext.Discord.Libraries;
 
 namespace DiscordPlayersPlugin.Configuration;
 
@@ -20,5 +21,5 @@ public class CommandSettings : BaseMessageSettings
     }
 
     public override bool IsPermanent() => false;
-    public override string GetTemplateName() => Command;
+    public override TemplateKey GetTemplateName() => new(Command);
 }

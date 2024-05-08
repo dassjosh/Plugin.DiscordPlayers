@@ -1,9 +1,11 @@
 using System;
+using System.Buffers;
 using System.IO;
 using DiscordPlayersPlugin.Enums;
 using DiscordPlayersPlugin.Plugins;
 using Oxide.Ext.Discord.Cache;
 using Oxide.Ext.Discord.Extensions;
+using Oxide.Ext.Discord.Libraries;
 using ProtoBuf;
 
 namespace DiscordPlayersPlugin.State;
@@ -22,21 +24,23 @@ public class MessageState
 
     private MessageState() { }
 
-    public static MessageState CreateNew(string command)
+    public static MessageState CreateNew(TemplateKey command)
     {
         return new MessageState
         {
-            Command = command
+            Command = command.Name
         };
     }
         
-    public static MessageState Create(string base64)
+    public static MessageState Create(ReadOnlySpan<char> base64)
     {
         try
         {
-            byte[] data = Convert.FromBase64String(base64);
+            Span<byte> buffer = stackalloc byte[64];
+            Convert.TryFromBase64Chars(base64, buffer, out int written);
             MemoryStream stream = DiscordPlayers.Instance.Pool.GetMemoryStream();
-            stream.Write(data, 0, data.Length);
+            stream.Write(buffer[..written]);
+            stream.Flush();
             stream.Position = 0;
             MessageState state = Serializer.Deserialize<MessageState>(stream);
             DiscordPlayers.Instance.Pool.FreeMemoryStream(stream);
@@ -44,7 +48,7 @@ public class MessageState
         }
         catch (Exception ex)
         {
-            DiscordPlayers.Instance.PrintError($"An error occured parsing state. State: {base64}. Exception:\n{ex}");
+            DiscordPlayers.Instance.PrintError($"An error occured parsing state. State: {base64.ToString()}. Exception:\n{ex}");
             return null;
         }
     }

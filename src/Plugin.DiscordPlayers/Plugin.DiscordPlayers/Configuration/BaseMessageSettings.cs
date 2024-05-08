@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using Newtonsoft.Json;
+using Oxide.Ext.Discord.Libraries;
 
 namespace DiscordPlayersPlugin.Configuration;
 
@@ -13,7 +14,7 @@ public abstract class BaseMessageSettings
     public int EmbedFieldLimit { get; set; }
 
     public abstract bool IsPermanent();
-    public abstract string GetTemplateName();
+    public abstract TemplateKey GetTemplateName();
 
     [JsonConstructor]
     public BaseMessageSettings() { }
